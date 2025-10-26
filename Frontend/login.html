@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap - ArticleSumm</title>
+    <link rel="stylesheet" href="/css/styles.css"> <script src="/js/script.js" defer></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="site-content"> <main class="container">
+            <section class="card auth-form"> <h2>Giriş Yap</h2>
+                <form id="login-form">
+                    <div id="login-error-message" style="color: red; margin-bottom: 15px; display: none;"></div> <label for="username">Kullanıcı Adı:</label>
+                    <input type="text" id="username" name="username" required>
+
+                    <label for="password">Şifre:</label>
+                    <input type="password" id="password" name="password" required>
+
+                    <button type="submit">Giriş Yap</button>
+                </form>
+                <p style="margin-top: 15px; text-align: center;">
+                    Hesabın yok mu? <a href="/register.html">Kayıt Ol</a>
+                </p>
+            </section>
+        </main>
+    </div> <footer>
+        <div class="footer-content">
+          <p>© 2025 ArticleSumm | Tüm Hakları Saklıdır.</p>
+          <div class="social-media">
+             </div>
+          <p class="contact-info">
+            <i class="fas fa-envelope"></i> contact@articlesumm.com
+          </p>
+        </div>
+      </footer>
+
+      <div id="feedback-widget">
+        <div id="feedback-toggle">📝 Geri Bildir</div>
+        <div id="feedback-box" class="hidden">
+          <h4>Platformu nasıl buldunuz?</h4>
+          <div id="star-rating">
+            <span class="star" data-value="1">☆</span>
+            <span class="star" data-value="2">☆</span>
+            <span class="star" data-value="3">☆</span>
+            <span class="star" data-value="4">☆</span>
+            <span class="star" data-value="5">☆</span>
+          </div>
+          <textarea id="comment" placeholder="Yorum (isteğe bağlı)"></textarea><br>
+          <button id="submit-feedback">Gönder</button>
+          <div id="thankYou" class="hidden">🎉 Teşekkürler! Geri bildiriminiz alındı.</div>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const errorMessageDiv = document.getElementById('login-error-message');
+
+            if(loginForm) {
+                loginForm.addEventListener('submit', async (event) => {
+                    event.preventDefault(); // Formun sayfayı yenilemesini engelle
+                    errorMessageDiv.style.display = 'none'; // Önceki hata mesajını gizle
+                    errorMessageDiv.textContent = '';
+
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+
+                    // --- TODO: API İsteği ---
+                    console.log("Giriş denemesi:", { username, password });
+                    alert("Giriş fonksiyonu henüz eklenmedi. Konsolu kontrol edin.");
+                    // try {
+                    //     const response = await fetch('/api/auth/token', {
+                    //         method: 'POST',
+                    //         headers: {
+                    //             'Content-Type': 'application/x-www-form-urlencoded', // FastAPI token endpoint'i form verisi bekler
+                    //         },
+                    //         body: new URLSearchParams({ // Veriyi form formatında gönder
+                    //             'username': username,
+                    //             'password': password
+                    //         })
+                    //     });
+
+                    //     const data = await response.json();
+
+                    //     if (!response.ok) {
+                    //         throw new Error(data.detail || 'Giriş başarısız.');
+                    //     }
+
+                    //     // Token'ı sakla (localStorage veya sessionStorage)
+                    //     localStorage.setItem('accessToken', data.access_token);
+                    //     localStorage.setItem('tokenType', data.token_type);
+
+                    //     // Başarılı giriş sonrası yönlendirme
+                    //     window.location.href = '/summary.html'; // Ana özetleme sayfasına yönlendir
+
+                    // } catch (error) {
+                    //     console.error('Giriş hatası:', error);
+                    //     errorMessageDiv.textContent = error.message || 'Bir hata oluştu.';
+                    //     errorMessageDiv.style.display = 'block';
+                    // }
+                    // --- --- --- --- --- ---
+                });
+            }
+        });
+      </script>
+
+</body>
+</html>

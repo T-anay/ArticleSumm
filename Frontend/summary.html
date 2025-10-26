@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Özetleme - ArticleSumm</title>
+    <link rel="stylesheet" href="/css/styles.css"> <script src="/js/script.js" defer></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="site-content">
+        <main class="container summary-layout">
+
+            <aside id="history-sidebar" class="card"> <h2>Geçmiş Özetlerim</h2>
+                <div id="history-list-container">
+                    <p id="loading-message">Özetler yükleniyor...</p>
+                    <div id="history-list">
+                        </div>
+                    <p id="no-history-message" style="display: none;">Henüz oluşturulmuş bir özetiniz bulunmuyor.</p>
+                    <div id="history-error-message" style="color: red; display: none;"></div>
+                </div>
+                 </aside>
+
+            <section id="summary-main-panel">
+                <div id="summary-input-section" class="card">
+                    <h2>Makale Metnini Girin veya Yükleyin</h2>
+                    <p class="form-description">Özetlemek ve etiketlemek istediğiniz metni aşağıdaki alana yapıştırın veya PDF dosyasını yükleyin.</p>
+
+                    <form id="text-summary-form">
+                        <label for="summary-title-text">Özet Başlığı (Opsiyonel):</label>
+                        <input type="text" id="summary-title-text" name="baslik" placeholder="Özetinize bir başlık verin..." maxlength="255">
+
+                        <label for="original-text">Metni Buraya Yapıştırın:</label>
+                        <textarea id="original-text" name="orijinal_metin" rows="10" placeholder="Özetlemek istediğiniz metni buraya yapıştırın (en az 50 karakter)..." required minlength="50"></textarea>
+
+                        <button type="submit">Metni Özetle</button>
+                        <div class="loading-indicator" id="text-loading">İşleniyor...</div>
+                    </form>
+
+                    <hr style="margin: 30px 0;">
+
+                    <form id="file-summary-form">
+                         <label for="summary-title-file">Özet Başlığı (Opsiyonel):</label>
+                        <input type="text" id="summary-title-file" name="baslik" placeholder="Özetinize bir başlık verin..." maxlength="255">
+
+                        <label for="pdf-file" class="file-upload-label">PDF Dosyası Seçin</label> <input type="file" id="pdf-file" name="dosya" accept=".pdf" required>
+                        <span id="file-name-display"></span> <small>Sadece .pdf formatı desteklenmektedir.</small><br><br>
+
+                        <button type="submit">Dosyayı Özetle</button>
+                        <div class="loading-indicator" id="file-loading">İşleniyor...</div>
+                    </form>
+                </div>
+
+                <div id="summary-output-area" class="card" style="display: none;">
+                     <h2>Özet Sonucu</h2>
+                     <div id="summary-output" class="summary-output">
+                        <h3 id="output-title">Özet Başlığı</h3> <h4>Oluşturulan Özet:</h4>
+                        <p id="summary-text">Özetiniz burada görünecek...</p>
+                        <div class="summary-tags">
+                            <h4>Etiketler:</h4>
+                            <div id="summary-tag-list">
+                                </div>
+                        </div>
+                     </div>
+                     <div id="error-message" style="color: red; margin-top: 15px;"></div>
+                </div>
+            </section>
+        </main>
+    </div> <footer>
+        <div class="footer-content">
+          <p>© 2025 ArticleSumm | Tüm Hakları Saklıdır.</p>
+          <div class="social-media"></div>
+          <p class="contact-info">
+            <i class="fas fa-envelope"></i> contact@articlesumm.com
+          </p>
+        </div>
+      </footer>
+
+      <div id="feedback-widget">
+        <div id="feedback-toggle">📝 Geri Bildir</div>
+        <div id="feedback-box" class="hidden">
+          <h4>Platformu nasıl buldunuz?</h4>
+          <div id="star-rating">
+            <span class="star" data-value="1">☆</span>
+            <span class="star" data-value="2">☆</span>
+            <span class="star" data-value="3">☆</span>
+            <span class="star" data-value="4">☆</span>
+            <span class="star" data-value="5">☆</span>
+          </div>
+          <textarea id="comment" placeholder="Yorum (isteğe bağlı)"></textarea><br>
+          <button id="submit-feedback">Gönder</button>
+          <div id="thankYou" class="hidden">🎉 Teşekkürler! Geri bildiriminiz alındı.</div>
+        </div>
+      </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dosya yükleme input'u için dosya adı gösterme
+            const fileInput = document.getElementById('pdf-file');
+            const fileNameDisplay = document.getElementById('file-name-display');
+            if (fileInput && fileNameDisplay) {
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files.length > 0) {
+                        fileNameDisplay.textContent = fileInput.files[0].name;
+                    } else {
+                        fileNameDisplay.textContent = '';
+                    }
+                });
+            }
+
+            // TODO: Geçmiş özetleri yükleme fonksiyonunu buraya taşı veya script.js'den çağır
+            // fetchHistoryForSidebar();
+
+            // TODO: Metin ve dosya formu gönderme olaylarını dinle
+            // const textForm = document.getElementById('text-summary-form');
+            // const fileForm = document.getElementById('file-summary-form');
+            // textForm.addEventListener('submit', handleSummarySubmit);
+            // fileForm.addEventListener('submit', handleFileUpload);
+
+             // Örnek: Geçmiş listesindeki bir öğeye tıklanınca sağ paneli güncelleme
+             const historyList = document.getElementById('history-list');
+             if(historyList){
+                 historyList.addEventListener('click', (event) => {
+                     const historyItem = event.target.closest('.history-item');
+                     if(historyItem){
+                         const summaryId = historyItem.dataset.id;
+                         console.log(`Geçmişten ${summaryId} ID'li özet seçildi.`);
+                         // TODO: API'den bu ID'li özetin detayını çekip sağ panelde göster
+                         // showSummaryDetails(summaryId);
+                     }
+                 });
+             }
+        });
+
+         // TODO: Silme fonksiyonu (history.html'deki gibi) buraya taşınabilir
+         // window.handleDelete = async (ozetId) => { ... }
+
+         // TODO: Sağ panelde özet detayını gösterme fonksiyonu
+         // async function showSummaryDetails(ozetId) { ... }
+    </script>
+
+</body>
+</html>
