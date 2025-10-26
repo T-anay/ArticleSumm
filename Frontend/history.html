@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geçmiş Özetlerim - ArticleSumm</title>
+    <link rel="stylesheet" href="/css/styles.css"> <script src="/js/script.js" defer></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="site-content"> <main class="container">
+            <section class="card"> <h2>Geçmiş Özetlerim</h2>
+
+                <div id="history-list-container">
+                    <p id="loading-message">Özetler yükleniyor...</p>
+                    <div id="history-list">
+                        </div>
+                     <p id="no-history-message" style="display: none;">Henüz oluşturulmuş bir özetiniz bulunmuyor.</p>
+                     <div id="history-error-message" style="color: red; display: none;"></div> </div>
+
+                </section>
+        </main>
+    </div> <footer>
+        <div class="footer-content">
+          <p>© 2025 ArticleSumm | Tüm Hakları Saklıdır.</p>
+          <div class="social-media">
+             </div>
+          <p class="contact-info">
+            <i class="fas fa-envelope"></i> contact@articlesumm.com
+          </p>
+        </div>
+      </footer>
+
+      <div id="feedback-widget">
+        <div id="feedback-toggle">📝 Geri Bildir</div>
+        <div id="feedback-box" class="hidden">
+          <h4>Platformu nasıl buldunuz?</h4>
+          <div id="star-rating">
+            <span class="star" data-value="1">☆</span>
+            <span class="star" data-value="2">☆</span>
+            <span class="star" data-value="3">☆</span>
+            <span class="star" data-value="4">☆</span>
+            <span class="star" data-value="5">☆</span>
+          </div>
+          <textarea id="comment" placeholder="Yorum (isteğe bağlı)"></textarea><br>
+          <button id="submit-feedback">Gönder</button>
+          <div id="thankYou" class="hidden">🎉 Teşekkürler! Geri bildiriminiz alındı.</div>
+        </div>
+      </div>
+
+       <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const historyListDiv = document.getElementById('history-list');
+            const loadingMessage = document.getElementById('loading-message');
+            const noHistoryMessage = document.getElementById('no-history-message');
+            const errorMessageDiv = document.getElementById('history-error-message');
+
+            async function fetchHistory() {
+                // --- TODO: API İsteği ---
+                console.log("Geçmiş özetler çekiliyor...");
+                loadingMessage.style.display = 'block'; // Yükleniyor mesajını göster
+                noHistoryMessage.style.display = 'none';
+                errorMessageDiv.style.display = 'none';
+                historyListDiv.innerHTML = ''; // Önceki listeyi temizle
+
+                // Örnek statik veri (API entegrasyonu yapılana kadar)
+                const sampleHistory = [
+                    { id: 1, baslik: "Örnek Özet Başlığı 1", etiketler: "Teknoloji,AI", ozet_metin: "Kısa özet...", sahip_id: 1 },
+                    { id: 2, baslik: "Başlıksız Özet", etiketler: "Sağlık", ozet_metin: "Başka bir kısa özet...", sahip_id: 1 }
+                ];
+
+                await new Promise(resolve => setTimeout(resolve, 500)); // Yapay bekleme
+
+                try {
+                    // const token = localStorage.getItem('accessToken');
+                    // if (!token) {
+                    //     // Kullanıcı giriş yapmamışsa login sayfasına yönlendir
+                    //     // window.location.href = '/login.html';
+                    //     throw new Error("Lütfen giriş yapın.");
+                    // }
+
+                    // const response = await fetch('/api/ozetler', {
+                    //     method: 'GET',
+                    //     headers: {
+                    //         'Authorization': `Bearer ${token}`
+                    //     }
+                    // });
+                    // const data = await response.json();
+                    // if (!response.ok) {
+                    //     throw new Error(data.detail || 'Özetler alınamadı.');
+                    // }
+
+                    const data = sampleHistory; // Şimdilik örnek veriyi kullan
+
+                    loadingMessage.style.display = 'none'; // Yükleniyor mesajını gizle
+
+                    if (data && data.length > 0) {
+                        data.forEach(item => {
+                            const itemElement = document.createElement('div');
+                            itemElement.classList.add('history-item');
+                            itemElement.dataset.id = item.id; // Silme işlemi için ID'yi sakla
+
+                            const tagsHtml = item.etiketler
+                                ? item.etiketler.split(',').map(tag => `<span>${tag.trim()}</span>`).join('')
+                                : ''; // Etiketler varsa göster
+
+                            itemElement.innerHTML = `
+                                <div class="history-item-content">
+                                    <h4><a href="#">${item.baslik || 'Başlıksız Özet'}</a></h4>
+                                    <div class="history-tags">
+                                        ${tagsHtml}
+                                    </div>
+                                    </div>
+                                <div class="history-item-actions">
+                                    <button class="delete-button" onclick="handleDelete(${item.id})">Sil</button>
+                                </div>
+                            `;
+                            historyListDiv.appendChild(itemElement);
+                        });
+                    } else {
+                        noHistoryMessage.style.display = 'block'; // Özet yok mesajını göster
+                    }
+
+                } catch (error) {
+                    console.error('Geçmiş yüklenirken hata:', error);
+                    loadingMessage.style.display = 'none';
+                    errorMessageDiv.textContent = error.message || 'Özetler yüklenirken bir hata oluştu.';
+                    errorMessageDiv.style.display = 'block';
+                }
+                // --- --- --- --- --- ---
+            }
+
+            // Silme işlemi için global fonksiyon (ileride daha iyi yönetilebilir)
+            window.handleDelete = async (ozetId) => {
+                if (!confirm(`${ozetId} ID'li özeti silmek istediğinizden emin misiniz?`)) {
+                    return;
+                }
+                // --- TODO: API İsteği ---
+                console.log(`${ozetId} ID'li özet siliniyor...`);
+                alert("Silme fonksiyonu henüz eklenmedi. Konsolu kontrol edin.");
+                // try {
+                //     const token = localStorage.getItem('accessToken');
+                //     if (!token) throw new Error("Lütfen giriş yapın.");
+
+                //     const response = await fetch(`/api/ozetler/${ozetId}`, {
+                //         method: 'DELETE',
+                //         headers: {
+                //             'Authorization': `Bearer ${token}`
+                //         }
+                //     });
+
+                //     if (!response.ok) {
+                //          // Sunucudan gelen hata mesajını almayı dene
+                //          let errorDetail = 'Silme işlemi başarısız.';
+                //          try {
+                //              const errorData = await response.json();
+                //              errorDetail = errorData.detail || errorDetail;
+                //          } catch (e) { /* JSON parse hatası olabilir, ana hatayı kullan */ }
+                //          throw new Error(errorDetail);
+                //     }
+
+                //     // Başarılı silme sonrası ilgili elementi sayfadan kaldır
+                //     const itemToRemove = historyListDiv.querySelector(`[data-id="${ozetId}"]`);
+                //     if (itemToRemove) {
+                //         itemToRemove.remove();
+                //     }
+                //     // Liste boş kaldıysa mesajı göster
+                //     if(historyListDiv.children.length === 0) {
+                //          noHistoryMessage.style.display = 'block';
+                //     }
+
+
+                // } catch (error) {
+                //     console.error('Silme hatası:', error);
+                //     errorMessageDiv.textContent = error.message || 'Özet silinirken bir hata oluştu.';
+                //     errorMessageDiv.style.display = 'block';
+                // }
+                 // --- --- --- --- --- ---
+            };
+
+            // Sayfa yüklendiğinde geçmişi çek
+            fetchHistory();
+        });
+       </script>
+
+</body>
+</html>
