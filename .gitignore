@@ -1,0 +1,27 @@
+# Güvenlik
+*.env
+
+# Sanal Ortam
+venv/
+*.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# İşletim Sistemi Dosyaları
+.DS_Store
+Thumbs.db
+
+# Editör/IDE Ayarları
+.vscode/
+.idea/
+*.iml
+
+# Build Artifacts (Eğer varsa)
+dist/
+build/
+*.egg-info/
