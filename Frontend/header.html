@@ -1,0 +1,46 @@
+<header>
+  <div class="logo-container">
+    <a href="summary.html">
+      <img src="images/transparent_logo.png" alt="ArticleSumm Logo">
+    </a>
+  </div>
+
+  <div class="site-title">
+    <h1>ArticleSumm</h1>
+  </div>
+
+  <nav class="main-nav">
+    <ul>
+      <li id="auth-links-logged-out" style="display: none;">
+        <a href="index.html" id="login-link">Giriş Yap</a>
+        </li>
+      
+      <li>
+        <button id="theme-toggle" aria-label="Temayı Değiştir">
+          <svg id="theme-icon-svg" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z">
+            </path>
+          </svg>
+        </button>
+      </li>
+
+      <li id="profile-dropdown-container" style="display: none;">
+        <button id="profile-button" class="profile-avatar-btn">
+          <i class="fas fa-user-circle"></i> 
+        </button>
+        
+        <div id="profile-dropdown-menu" class="profile-dropdown">
+          <a href="#" id="open-settings-modal-btn">
+           <i class="fas fa-cog"></i> Ayarlar
+          </a>
+          <a href="#" id="dropdown-logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Çıkış Yap
+          </a>
+        </div>
+      </li>
+
+    </ul>
+  </nav>
+</header>

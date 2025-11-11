@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giriş Yap - ArticleSumm</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="auth-body">
+
+  <div class="auth-flipper-container">
+    <div class="auth-flipper">
+
+      <div class="auth-front">
+        <div class="auth-container">
+          <h1>ArticleSumm</h1>
+          <h2>Giriş Yap</h2>
+          <form id="login-form">
+            <input type="email" id="loginEmail" placeholder="E-posta" required />
+            <input type="password" id="loginPassword" placeholder="Şifre" required />
+            <button type="submit">Giriş Yap</button>
+            <div class="google-login">
+              <div id="google-login-button-container-login"></div>
+            </div>
+          </form>
+          
+          <div id="error-message-login" class="error-message"></div>
+          
+          <p class="auth-switch" style="text-align: right; margin-top: 0.5rem; margin-bottom: 0;">
+            <a href="#" id="show-forgot-btn">Şifremi unuttum?</a>
+          </p>
+          
+          <p class="auth-switch">Hesabın yok mu? <a href="#" id="show-register-btn">Kayıt Ol</a></p>
+        </div>
+      </div>
+
+      <div class="auth-back">
+        <div class="auth-container">
+          <h1>ArticleSumm</h1>
+          <h2>Yeni Hesap Oluştur</h2>
+          <form id="register-form">
+            <input type="text" id="firstName" placeholder="Ad" required />
+            <input type="text" id="lastName" placeholder="Soyad" required />
+            <input type="email" id="email" placeholder="E-posta" required />
+            <input type="password" id="password" placeholder="Şifre" required />
+            <input type="password" id="confirmPassword" placeholder="Şifre Tekrar" required />
+            <button type="submit">Kayıt Ol</button>
+            <div class="google-login">
+              <div id="google-login-button-container-register"></div>
+            </div>
+          </form>
+
+          <div id="error-message-register" class="error-message"></div>
+          
+          <p class="auth-switch">Zaten hesabın var mı? <a href="#" id="show-login-btn">Giriş Yap</a></p>
+        </div>
+      </div>
+      
+      <div class="auth-forgot">
+        <div class="auth-container">
+          <h1>ArticleSumm</h1>
+          <h2>Şifremi Unuttum</h2>
+          <p class="auth-switch" style="margin-top: -1rem; margin-bottom: 1.5rem;">
+            Sıfırlama linki göndermek için e-posta adresinizi girin.
+          </p>
+          <form id="forgot-password-form">
+            <input type="email" id="forgotEmail" placeholder="E-posta" required />
+            <button type="submit">Gönder</button>
+          </form>
+          
+          <div id="error-message-forgot" class="error-message"></div>
+          
+          <p class="auth-switch">Giriş yapmaya geri dön. 
+            <a href="#" id="show-login-btn-from-forgot">Giriş Yap</a>
+          </p>
+        </div>
+      </div>
+      </div>
+  </div>
+  <script src="js/script.js"></script>
+</body>
+</html>

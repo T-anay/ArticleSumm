@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Özetleme | ArticleSumm</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="summary-page-body">
+
+  <aside id="sidebar" class="gemini-sidebar">
+    
+    <div class="sidebar-header">
+      <a href="summary.html" class="sidebar-logo main-logo">
+        <img src="images/transparent_logo.png" alt="Logo">
+      </a>
+      <button id="sidebar-toggle" title="Menüyü aç/kapat">
+        <img src="images/transparent_logo.png" alt="Logo" class="toggle-icon mini-logo">
+        <i class="fas fa-chevron-right toggle-icon open-arrow"></i>
+        <i class="fas fa-chevron-left toggle-icon close-arrow"></i>
+      </button>
+    </div>
+    
+    <div class="sidebar-content">
+      <ul class="sidebar-menu">
+        <li class="active"> <a href="summary.html">
+            <i class="fas fa-plus"></i>
+            <span>Yeni Özet</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-section-title">En son</div>
+      
+      <ul id="summaryList" class="sidebar-menu history">
+        <li class="placeholder">Yükleniyor...</li>
+      </ul>
+    </div>
+    </aside>
+
+  <div id="main-content-container">
+    
+    <header id="main-header">
+      <div id="header-placeholder"></div>
+    </header>
+
+    <main id="mainArea">
+      <section id="inputArea" class="card">
+        <h2>Yeni Özet Oluştur</h2>
+        
+        <div id="drop-zone" class="drop-zone">
+          <input type="file" id="pdfInput" accept="application/pdf" hidden>
+          <i class="fas fa-file-lines"></i>
+          <p>PDF dosyanızı buraya sürükleyin veya <span class="drop-zone-browse">gözatmak için tıklayın</span></p>
+          <div id="file-name-display" style="display: none;"></div>
+        </div>
+
+        <div class="actions">
+          <button id="summarizeBtn">Özetle</button>
+        </div>
+        
+        <div id="loading" class="loading-indicator" style="display: none;">
+          Özetleniyor, lütfen bekleyin...
+        </div>
+        <div id="form-error-message" style="display: none;"></div>
+      </section>
+
+      <section id="resultArea" class="card" style="display: none;">
+        <h3>Sonuç</h3>
+        <div id="summaryOutput">Henüz özet bulunmuyor.</div>
+        <div id="summaryTags" class="summary-tags"></div>
+      </section>
+    </main>
+  </div>
+  
+  
+  <div id="editModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content card">
+      <h2>Özeti Düzenle</h2>
+      <form id="editForm">
+        <input type="hidden" id="editOzetId">
+        
+        <label for="editBaslik">Başlık:</label>
+        <input type="text" id="editBaslik" class="modal-input" required>
+        
+        <label for="editOzetMetin">Özet Metni:</label>
+        <textarea id="editOzetMetin" class="modal-input" rows="6"></textarea>
+        
+        <label for="editEtiketler">Etiketler (Virgülle ayrılmış):</label>
+        <input type="text" id="editEtiketler" class="modal-input">
+
+        <label>İkon Seç:</label>
+        <div id="iconPicker" class="icon-picker">
+          </div>
+        
+        <div id="modal-error-message" class="error-message" style="display: none;"></div>
+        
+        <div class="modal-actions">
+          <button type="button" id="cancelEditBtn" class="modal-btn-cancel">İptal</button>
+          <button type="submit" id="saveEditBtn" class="modal-btn-save">Kaydet</button>
+        </div>
+      </form>
+      <button id="closeModalBtn" class="modal-close-btn" aria-label="Kapat">&times;</button>
+    </div>
+  </div>
+  
+  
+  <div id="settingsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content card settings-modal-wide">
+      <button id="closeSettingsModalBtn" class="modal-close-btn" aria-label="Kapat">&times;</button>
+      
+      <div class="settings-container">
+
+        <div class="settings-nav">
+          <h2>Ayarlar</h2>
+          <ul class="settings-menu">
+            <li><a href="#" class="nav-tab active" data-tab="tab-gorunum"><i class="fas fa-desktop"></i> Görünüm</a></li>
+            <li><a href="#" class="nav-tab" data-tab="tab-profil"><i class="fas fa-user"></i> Profil</a></li>
+            <li><a href="#" class="nav-tab" data-tab="tab-guvenlik"><i class="fas fa-lock"></i> Güvenlik</a></li>
+            <li><a href="#" class="nav-tab" data-tab="tab-hesap"><i class="fas fa-exclamation-triangle"></i> Hesap</a></li>
+          </ul>
+        </div>
+
+        <div class="settings-content">
+
+          <div id="tab-gorunum" class="tab-pane active">
+            <h3>Görünüm</h3>
+            <div class="setting-section">
+              <label>Yazı Tipi Boyutu</label>
+              <p class="setting-description">
+                Özet metinlerinin yazı boyutunu ayarlar.
+              </p>
+              <div class="font-size-selector">
+                <button class="font-btn" data-size="small">Küçük</button>
+                <button class="font-btn active" data-size="medium">Orta</button>
+                <button class="font-btn" data-size="large">Büyük</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-profil" class="tab-pane">
+            <h3>Profil</h3>
+            <div class="setting-section">
+              <label>Profil Bilgileri</label>
+              <p class="setting-description">
+                Hesap bilgilerinizi güncelleyin.
+              </p>
+              <form id="profile-update-form">
+                <label for="editFirstName" class="modal-label-small">Ad:</label>
+                <input type="text" id="editFirstName" class="modal-input" placeholder="Adınız...">
+                
+                <label for="editLastName" class="modal-label-small">Soyad:</label>
+                <input type="text" id="editLastName" class="modal-input" placeholder="Soyadınız...">
+                
+                <div id="profile-message" class="modal-message"></div>
+                <button type="submit" id="save-profile-btn" class="modal-btn-save" style="margin-top: 1rem;">
+                  Profili Güncelle
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div id="tab-guvenlik" class="tab-pane">
+            <h3>Güvenlik</h3>
+            <div class="setting-section">
+              <label>E-posta</label>
+              <form id="email-change-form">
+                <label for="editEmail" class="modal-label-small">Yeni E-posta:</label>
+                <input type="email" id="editEmail" class="modal-input" required>
+                <label for="emailCurrentPass" class="modal-label-small">Onay için Mevcut Şifre:</label>
+                <input type="password" id="emailCurrentPass" class="modal-input" required>
+                <div id="email-message" class="modal-message"></div>
+                <button type="submit" id="save-email-btn" class="modal-btn-save" style="margin-top: 1rem;">
+                  E-postayı Güncelle
+                </button>
+              </form>
+            </div>
+            
+            <div class="setting-section">
+              <label>Şifre</label>
+              <form id="password-change-form">
+                <label for="passCurrent" class="modal-label-small">Mevcut Şifre:</label>
+                <input type="password" id="passCurrent" class="modal-input" required>
+                <label for="passNew" class="modal-label-small">Yeni Şifre:</label>
+                <input type="password" id="passNew" class="modal-input" required>
+                <label for="passConfirm" class="modal-label-small">Yeni Şifre (Tekrar):</label>
+                <input type="password" id="passConfirm" class="modal-input" required>
+                <div id="password-message" class="modal-message"></div>
+                <button type="submit" id="save-password-btn" class="modal-btn-save" style="margin-top: 1rem;">
+                  Şifreyi Değiştir
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div id="tab-hesap" class="tab-pane">
+            <h3>Hesap</h3>
+            <div class="setting-section danger-zone">
+              <label>Tüm Özetleri Sil</label>
+              <p class="setting-description">
+                Tüm özetleriniz kalıcı olarak silinecektir. Bu işlem geri alınamaz.
+              </p>
+              <button id="delete-all-summaries-btn" class="modal-btn-danger">Tüm Özetleri Sil</button>
+              <div id="danger-message-1" class="modal-message"></div>
+            </div>
+<div class="setting-section danger-zone">
+  <label>Hesabı Sil</label>
+  <p class="setting-description">
+    Hesabınız ve tüm verileriniz kalıcı olarak silinecektir.
+  </p>
+  
+  <form id="delete-account-form" style="display: none; margin-top: 1rem;">
+      <label for="deleteAccountPass" class="modal-label-small">Onaylamak için Mevcut Şifrenizi Girin:</label>
+      <input type="password" id="deleteAccountPass" class="modal-input" required>
+      <button type="submit" id="confirm-delete-account-btn" class="modal-btn-danger" style="margin-top: 1rem; width: 100%;">
+        Hesabı Kalıcı Olarak Sil
+      </button>
+      <button type="button" id="cancel-delete-account-btn" class="modal-btn-cancel" style="margin-top: 0.5rem; width: 100%;">
+        İptal
+      </button>
+  </form>
+  
+  <button id="delete-account-btn" class="modal-btn-danger">Hesabı Kalıcı Olarak Sil</button>
+  <div id="danger-message-2" class="modal-message"></div>
+</div>
+          </div>
+
+        </div> </div> </div> </div>
+  <script src="js/script.js"></script>
+</body>
+</html>
