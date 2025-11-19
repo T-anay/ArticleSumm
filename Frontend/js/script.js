@@ -1155,3 +1155,79 @@ function initSummaryPage() {
       fetchAndOpenOzet(ozetIdToOpen);
   }
 }
+
+// ==============================================
+// === DİNAMİK ARKAPLAN VE MOUSE EFEKTLERİ ===
+// ==============================================
+
+function initBackgroundAnimation() {
+
+    let animationContainer = document.querySelector('.site-background-animation');
+    if (!animationContainer) {
+        const animationHTML = `
+          <div class="site-background-animation">
+            <div class="squares">
+              <div class="square"></div><div class="square"></div><div class="square"></div>
+              <div class="square"></div><div class="square"></div><div class="square"></div>
+              <div class="square"></div><div class="square"></div><div class="square"></div>
+              <div class="square"></div>
+            </div>
+          </div>`;
+        document.body.insertAdjacentHTML('afterbegin', animationHTML);
+    }
+
+
+    const squaresContainer = document.querySelector('.squares');
+    if (squaresContainer) {
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.clientX) / 40;
+            const y = (window.innerHeight / 2 - e.clientY) / 40;
+            squaresContainer.style.transform = `translate(${x}px, ${y}px)`;
+        });
+    }
+
+
+    const squares = document.querySelectorAll('.square');
+    
+    squares.forEach(square => {
+        square.addEventListener('click', () => {
+
+            const rect = square.getBoundingClientRect();
+            
+
+            const explosion = document.createElement('div');
+            explosion.classList.add('explosion-particle');
+            
+
+            explosion.style.width = `${rect.width}px`;
+            explosion.style.height = `${rect.height}px`;
+            explosion.style.left = `${rect.left}px`;
+            explosion.style.top = `${rect.top}px`;
+            
+            document.body.appendChild(explosion);
+            
+
+            setTimeout(() => explosion.remove(), 500);
+
+            square.style.transition = 'none'; 
+            square.style.opacity = '0';
+            
+            square.style.animation = 'none';
+            
+            void square.offsetWidth; 
+            
+            setTimeout(() => {
+                square.style.transition = ''; 
+                square.style.animation = '';  
+               
+            }, 100);
+        });
+    });
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+if (document.body.classList.contains('auth-body') || document.body.classList.contains('summary-page-body')) {
+    initBackgroundAnimation();
+}
+});

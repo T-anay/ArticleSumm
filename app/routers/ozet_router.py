@@ -7,6 +7,7 @@ from app.core.auth_helper import get_current_user
 from app.services.ozet_service import create_ozet, list_ozetler, get_ozet, delete_ozet, update_ozet ,delete_all_summaries
 import fitz  
 import io
+import asyncio
 
 router = APIRouter(prefix="/api/ozetler", tags=["Ozetler"])
 
@@ -33,6 +34,8 @@ async def create_summary_from_pdf(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF işlenirken hata oluştu: {str(e)}")
+    
+    await asyncio.sleep(5)  # Test için oluşturulmuş yapay gecikme
 
     new = create_ozet(db, baslik, orijinal_metin, current_user.id)
     return new
