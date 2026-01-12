@@ -4,60 +4,159 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ayarlar | ArticleSumm</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="summary-page-body">
+
+  <div class="site-background-animation">
+    <div class="squares">
+      <div class="square"></div><div class="square"></div><div class="square"></div>
+      <div class="square"></div><div class="square"></div><div class="square"></div>
+      <div class="square"></div><div class="square"></div><div class="square"></div>
+      <div class="square"></div>
+    </div>
+  </div>
 
   <aside id="sidebar" class="gemini-sidebar">
     <div class="sidebar-header">
       <a href="summary.html" class="sidebar-logo main-logo">
         <img src="images/transparent_logo.png" alt="Logo">
+        <span>ArticleSumm</span>
       </a>
       <button id="sidebar-toggle" title="Menüyü aç/kapat">
-        <img src="images/transparent_logo.png" alt="Logo" class="toggle-icon mini-logo">
-        <i class="fas fa-chevron-right toggle-icon open-arrow"></i>
-        <i class="fas fa-chevron-left toggle-icon close-arrow"></i>
+        <i class="fas fa-chevron-left"></i>
       </button>
     </div>
     
-    <ul class="sidebar-menu">
-      <li>
-        <a href="summary.html">
-          <i class="fas fa-plus"></i>
-          <span>Yeni Özet</span>
-        </a>
-      </li>
-    </ul>
-    <div class="sidebar-section-title">En son</div>
-    <ul id="summaryList" class="sidebar-menu history">
-      <li class="placeholder">Yükleniyor...</li>
-    </ul>
+    <div class="sidebar-content">
+      <ul class="sidebar-menu">
+        <li>
+          <a href="summary.html">
+            <i class="fas fa-plus"></i>
+            <span>Yeni Damıtma</span>
+          </a>
+        </li>
+      </ul>
 
-    <div class="sidebar-section-title">Hesap</div>
-    <ul class="sidebar-menu">
-      <li class="active"> <a href="settings.html" id="settings-link">
-          <i class="fas fa-cog"></i>
-          <span>Ayarlar</span>
-        </a>
-      </li>
-    </ul>
+      <div class="sidebar-section-title">Hesap</div>
+      <ul class="sidebar-menu">
+        <li class="active"> 
+          <a href="settings.html" id="settings-link">
+            <i class="fas fa-cog"></i>
+            <span>Ayarlar</span>
+          </a>
+        </li>
+      </ul>
+    </div>
   </aside>
 
   <div id="main-content-container">
+    
     <header id="main-header">
       <div id="header-placeholder"></div>
     </header>
 
     <main id="mainArea">
-      <section id="settingsArea" class="card">
-        <h2>Ayarlar</h2>
-        <p>Hesap ve uygulama ayarlarınızı buradan yönetebilirsiniz.</p>
-        
-        <div id="font-settings" style="margin-top: 2rem;">
-          </div>
+      
+      <section id="settingsArea" class="card settings-large-card">
+        <div class="settings-header-box">
+          <h2>Ayarlar</h2>
+          <p>Hesap tercihlerinizi ve okuma deneyiminizi kişiselleştirin.</p>
+        </div>
 
+        <div class="settings-layout-page">
+          <aside class="settings-page-sidebar">
+            <button class="settings-page-tab active" data-target="tab-profile">
+              <i class="fas fa-user"></i> Profil
+            </button>
+            <button class="settings-page-tab" data-target="tab-appearance">
+              <i class="fas fa-paint-brush"></i> Görünüm
+            </button>
+            <button class="settings-page-tab text-danger" data-target="tab-danger">
+              <i class="fas fa-exclamation-triangle"></i> Tehlikeli Bölge
+            </button>
+          </aside>
+
+          <div class="settings-page-content">
+            
+            <div id="tab-profile" class="settings-panel-page active">
+              <h3>Hesap Bilgileri</h3>
+              <div class="form-group-page">
+                <label>Ad Soyad</label>
+                <input type="text" class="input-page" value="Kullanıcı Adı" placeholder="Adınız">
+              </div>
+              <div class="form-group-page">
+                <label>E-posta</label>
+                <input type="email" class="input-page" value="ornek@email.com" disabled style="opacity: 0.7; cursor: not-allowed;">
+                <p class="hint-text">E-posta adresi güvenlik nedeniyle değiştirilemez.</p>
+              </div>
+              <div class="form-group-page">
+                <label>Şifre Değiştir</label>
+                <input type="password" class="input-page" placeholder="Yeni Şifre">
+              </div>
+              <button class="primary-btn small-btn">Bilgileri Güncelle</button>
+            </div>
+
+            <div id="tab-appearance" class="settings-panel-page">
+              <h3>Okuma Deneyimi</h3>
+              
+              <div class="setting-item-page">
+                <label>Varsayılan Yazı Boyutu</label>
+                <div class="font-size-controls">
+                  <button class="font-btn" data-size="small">Küçük (A-)</button>
+                  <button class="font-btn active" data-size="medium">Orta (A)</button>
+                  <button class="font-btn" data-size="large">Büyük (A+)</button>
+                </div>
+              </div>
+
+              <div class="setting-item-page" style="margin-top: 25px;">
+                <label>Tema Tercihi</label>
+                <div class="theme-switcher-group page-theme-select">
+                    <button class="theme-btn" data-mode="light" title="Gündüz">
+                        <i class="fas fa-sun"></i> Gündüz
+                    </button>
+                    <button class="theme-btn" data-mode="sepia" title="Sepya">
+                        <i class="fas fa-book-open"></i> Okuma
+                    </button>
+                    <button class="theme-btn" data-mode="dark" title="Gece">
+                        <i class="fas fa-moon"></i> Gece
+                    </button>
+                </div>
+                <p class="hint-text">Seçtiğiniz tema tüm sayfalarda uygulanır.</p>
+              </div>
+            </div>
+
+            <div id="tab-danger" class="settings-panel-page">
+              <h3 class="text-danger">Hesap ve Güvenlik</h3>
+              
+              <div class="danger-box-page">
+                <div class="danger-info">
+                  <strong>Tüm Özet Geçmişini Sil</strong>
+                  <p>Kaydettiğiniz tüm özetler cihazdan ve sunucudan kalıcı olarak silinecek.</p>
+                </div>
+                <button id="btn-delete-history-page" class="btn-danger-outline">Temizle</button>
+              </div>
+
+              <div class="danger-box-page">
+                <div class="danger-info">
+                  <strong>Hesabı Sil</strong>
+                  <p>Hesabınız ve tüm verileriniz sunucudan kaldırılacak. Bu işlem geri alınamaz.</p>
+                </div>
+                <button id="btn-delete-account-page" class="btn-danger-solid">Hesabı Sil</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </section>
+
     </main>
   </div>
   

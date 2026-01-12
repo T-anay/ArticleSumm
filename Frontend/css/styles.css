@@ -1,27 +1,54 @@
 /* ==============================================
+   0. FONT İMPORTLARI
+   Arayüz için Inter, Uzun Okuma için Merriweather
+   ============================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@300;400;700&display=swap');
+
+/* ==============================================
    1. GENEL AYARLAR VE RENK PALETİ
    ============================================== */
 :root {
-  --primary-color: #00ADB5;
-  --primary-hover-color: #008C95;
-  --bg-light: #EEEEEE;
+  /* --- Ana Renkler (ScienceDirect Mavisi) --- */
+  --primary-color: #005CAB; 
+  --primary-hover-color: #004a8b;
+  
+  /* --- Gündüz Modu (Varsayılan) --- */
+  --bg-light: #FAFAFA; 
   --card-bg-light: #FFFFFF;
-  --text-light: #222831;
-  --text-light-muted: #393E46;
-  --border-light: #DDDDDD;
-  --bg-dark: #222831;
-  --card-bg-dark: #393E46;
-  --text-dark: #EEEEEE;
-  --text-dark-muted: #a0a0a0;
-  --border-dark: #4a4f57;
+  --text-light: #333333; 
+  --text-light-muted: #555555;
+  --border-light: #E0E0E0;
+
+  /* --- Karanlık Mod (OLED Optimizasyonu) --- */
+  --bg-dark: #121212; 
+  --card-bg-dark: #1E1E1E; 
+  --text-dark: #E0E0E0;    
+  --text-dark-muted: #A0A0A0;
+  --border-dark: #2C2C2C;
+
+  /* --- Font Ayarları --- */
+  --font-ui: 'Inter', sans-serif;         
+  --font-reading: 'Merriweather', serif;  
+}
+
+/* --- Sepya Modu (Mavi Işık Azaltımı) --- */
+body.sepia-mode {
+  --bg-light: #FBF0D9;       
+  --card-bg-light: #F4ECD8;
+  --text-light: #5F4B32;     
+  --text-light-muted: #8B7864;
+  --border-light: #D7C6B0;
+  --primary-color: #D35400;  
+  --primary-hover-color: #a04000;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-ui); 
   background-color: var(--bg-light);
   color: var(--text-light);
   transition: all 0.3s ease;
+  line-height: 1.5;
 }
 
 body.dark-mode {
@@ -33,8 +60,8 @@ body.dark-mode {
   background-color: var(--card-bg-light);
   border: 1px solid var(--border-light);
   border-radius: 12px;
-  padding: 25px 30px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 30px; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
 }
 .dark-mode .card {
   background-color: var(--card-bg-dark);
@@ -76,7 +103,7 @@ body.dark-mode {
 .auth-container input {
   width: 100%;
   margin: 0.4rem 0;
-  padding: 0.8rem;
+  padding: 12px; 
   border-radius: 6px;
   border: 1px solid var(--border-light);
   background-color: var(--bg-light);
@@ -84,6 +111,7 @@ body.dark-mode {
   box-sizing: border-box;
   outline: none;
   font-size: 1rem;
+  font-family: var(--font-ui);
 }
 .dark-mode .auth-container input {
   border-color: var(--border-dark);
@@ -92,28 +120,28 @@ body.dark-mode {
 }
 .auth-container input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.2);
+  box-shadow: 0 0 0 3px rgba(0, 92, 171, 0.2); 
 }
 
 .auth-container button {
   width: 100%;
   margin-top: 1rem;
-  padding: 0.8rem;
+  padding: 12px;
   border: none;
   border-radius: 6px;
   background-color: var(--primary-color);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-size: 1rem;
+  font-family: var(--font-ui);
 }
 .auth-container button:hover { background-color: var(--primary-hover-color); }
 
 .google-login {
   margin-top: 1rem;
 }
-
 
 .auth-switch { margin-top: 1.5rem; font-size: 0.9rem; }
 .auth-switch a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
@@ -125,7 +153,7 @@ body.dark-mode {
    ============================================== */
 .auth-flipper-container {
   position: relative;
-  width: 320px;
+  width: 360px;
   transition: height 0.6s ease-in-out;
 }
 
@@ -150,9 +178,9 @@ body.dark-mode {
   
   background-color: var(--card-bg-light);
   border: 1px solid var(--border-light);
-  padding: 2rem 3rem;
+  padding: 2.5rem; 
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
   box-sizing: border-box;
   
   transition: opacity 0.3s ease-in-out; 
@@ -172,7 +200,6 @@ body.dark-mode {
   pointer-events: all;
 }
 
-
 .auth-back,
 .auth-forgot {
   transform: rotateY(180deg);
@@ -180,7 +207,6 @@ body.dark-mode {
   z-index: 1; 
   pointer-events: none; 
 }
-
 
 .auth-flipper-container.is-flipped .auth-flipper {
   transform: rotateY(180deg);
@@ -195,7 +221,6 @@ body.dark-mode {
     z-index: 2;
     pointer-events: all;
 }
-
 
 .auth-flipper-container.is-forgot .auth-flipper {
   transform: rotateY(180deg); 
@@ -242,7 +267,7 @@ body.dark-mode {
   box-sizing: border-box;
 }
 .dark-mode #sidebar.gemini-sidebar {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-dark); 
   color: var(--text-dark);
   border-right: 1px solid var(--border-dark);
 }
@@ -269,6 +294,7 @@ body.dark-mode {
   opacity: 1;
   transition: opacity 0.2s ease;
   flex-grow: 1;
+  font-weight: 700;
 }
 .dark-mode .sidebar-logo.main-logo { color: var(--text-dark); }
 .sidebar-logo.main-logo img {
@@ -336,7 +362,7 @@ body.dark-mode {
   background-color: rgba(0, 0, 0, 0.05);
 }
 .sidebar-menu li.active {
-  background-color: rgba(0, 173, 181, 0.1);
+  background-color: rgba(0, 92, 171, 0.1); /* Primary color uyumu */
 }
 .sidebar-menu li.active a {
   color: var(--primary-color);
@@ -345,9 +371,9 @@ body.dark-mode {
 
 .dark-mode .sidebar-menu li a,
 .dark-mode .sidebar-menu li.placeholder { color: var(--text-dark); }
-.dark-mode .sidebar-menu li:hover { background-color: rgba(255, 255, 255, 0.1); }
+.dark-mode .sidebar-menu li:hover { background-color: rgba(255, 255, 255, 0.05); }
 .dark-mode .sidebar-menu li.active {
-  background-color: rgba(0, 173, 181, 0.15);
+  background-color: rgba(0, 92, 171, 0.15);
 }
 .dark-mode .sidebar-menu li.active a {
   color: var(--primary-color);
@@ -417,7 +443,7 @@ body.dark-mode {
 #main-header {
   display: flex;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.8); /* Biraz daha opak */
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-light);
   padding: 10px 20px;
@@ -427,7 +453,7 @@ body.dark-mode {
   box-sizing: border-box;
 }
 .dark-mode #main-header {
-  background-color: rgba(57, 62, 70, 0.6);
+  background-color: rgba(18, 18, 18, 0.8);
   border-bottom-color: var(--border-dark);
 }
 
@@ -438,7 +464,7 @@ body.dark-mode {
   display: flex !important; align-items: center; justify-content: space-between;
 }
 #header-placeholder .logo-container { display: none; }
-#header-placeholder .site-title h1 { font-size: 1.4em; color: var(--text-light); margin: 0; }
+#header-placeholder .site-title h1 { font-size: 1.4em; color: var(--text-light); margin: 0; font-weight: 600; }
 .dark-mode #header-placeholder .site-title h1 { color: var(--text-dark); }
 
 #header-placeholder .main-nav ul { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; }
@@ -447,7 +473,7 @@ body.dark-mode {
 #header-placeholder .main-nav button {
   color: var(--text-light); font-size: 15px; padding: 8px 12px; border-radius: 6px;
   text-decoration: none; background: none; border: none; cursor: pointer;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; font-family: var(--font-ui);
 }
 #header-placeholder .main-nav a:hover,
 #header-placeholder .main-nav button:not(#theme-toggle):hover { background-color: rgba(0, 0, 0, 0.05); }
@@ -586,6 +612,7 @@ body.dark-mode {
   border-bottom: 1px solid var(--border-light);
   padding-bottom: 10px;
   margin-top: 0;
+  font-family: var(--font-ui);
 }
 #mainArea .card h3 {
   color: var(--primary-color);
@@ -602,7 +629,7 @@ body.dark-mode {
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    background-color: var(--bg-light);
+    background-color: rgba(0,0,0,0.01); 
 }
 .drop-zone:hover {
     border-color: var(--primary-color);
@@ -611,7 +638,7 @@ body.dark-mode {
 .drop-zone.drag-over {
     border-color: var(--primary-color);
     border-style: solid;
-    background-color: rgba(0, 173, 181, 0.05);
+    background-color: rgba(0, 92, 171, 0.05); 
     transform: scale(1.02);
 }
 .drop-zone i {
@@ -648,13 +675,35 @@ body.dark-mode {
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    font-family: var(--font-ui);
 }
 #inputArea .actions button:hover { background-color: var(--primary-hover-color); }
 #inputArea .actions button:disabled { background-color: #999; cursor: not-allowed; }
 
-#resultArea { border-top: 3px solid var(--primary-color); }
-#resultArea #summaryOutput { line-height: 1.7; white-space: pre-wrap; }
-#summaryTags { margin-top: 15px; }
+#resultArea { 
+  border-top: none; 
+  margin-top: 20px;
+}
+
+/* --- OKUNABİLİRLİK GÜNCELLEMESİ --- */
+#resultArea #summaryOutput { 
+  line-height: 1.6; 
+  white-space: pre-wrap;
+  max-width: 65ch; 
+  margin: 0 auto;  
+  font-size: 1.05rem;
+}
+
+/* Uzun okuma modu için Serif Font */
+body.font-mode-serif #summaryOutput {
+  font-family: var(--font-reading);
+}
+/* Arayüz/Kısa okuma için Sans-Serif */
+body.font-mode-sans #summaryOutput {
+  font-family: var(--font-ui);
+}
+
+#summaryTags { margin-top: 15px; text-align: center; }
 #summaryTags span {
   background-color: var(--primary-color);
   color: white;
@@ -693,11 +742,10 @@ body.dark-mode {
 }
 .dark-mode .drop-zone.drag-over {
     border-color: var(--primary-color);
-    background-color: rgba(0, 173, 181, 0.1);
+    background-color: rgba(0, 92, 171, 0.1);
 }
 .dark-mode .drop-zone p { color: var(--text-dark-muted); }
 .dark-mode #file-name-display { color: var(--primary-color); }
-.dark-mode #resultArea { border-top-color: var(--primary-color); }
 
 /* ==============================================
    4. MOBİL UYUMLULUK (RESPONSIVE)
@@ -742,6 +790,9 @@ body.dark-mode {
   .auth-front, .auth-back, .auth-forgot { 
     padding: 1.5rem 2rem;
   }
+  #summaryOutput {
+    padding: 0 16px; 
+  }
 }
 
 
@@ -750,10 +801,10 @@ body.dark-mode {
    ============================================== */
 
 .sidebar-menu li.pinned {
-  background-color: rgba(0, 173, 181, 0.05);
+  background-color: rgba(0, 92, 171, 0.05);
 }
 .dark-mode .sidebar-menu li.pinned {
-  background-color: rgba(0, 173, 181, 0.08);
+  background-color: rgba(0, 92, 171, 0.08);
 }
 .action-btn.pin-btn.active {
   color: #f0c419;
@@ -779,7 +830,16 @@ body.dark-mode {
   max-width: 500px; 
   max-height: 80vh;
   overflow-y: auto;
+  background-color: var(--card-bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 25px;
 }
+.dark-mode .modal-content {
+  background-color: var(--card-bg-dark);
+  border-color: var(--border-dark);
+}
+
 .modal-content h2 {
   margin-top: 0;
   color: var(--text-light);
@@ -821,6 +881,7 @@ body.dark-mode {
   box-sizing: border-box;
   font-size: 1rem;
   outline: none;
+  font-family: var(--font-ui);
 }
 .dark-mode .modal-input {
   border-color: var(--border-dark);
@@ -829,7 +890,7 @@ body.dark-mode {
 }
 .modal-input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.2);
+  box-shadow: 0 0 0 3px rgba(0, 92, 171, 0.2);
 }
 
 .modal-actions {
@@ -851,6 +912,7 @@ body.dark-mode {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: var(--font-ui);
 }
 .modal-btn-save {
   background-color: var(--primary-color);
@@ -858,12 +920,12 @@ body.dark-mode {
 }
 .modal-btn-save:hover { background-color: var(--primary-hover-color); }
 .modal-btn-cancel {
-  background-color: var(--card-bg-light);
+  background-color: var(--bg-light);
   color: var(--text-light-muted);
   border: 1px solid var(--border-light);
 }
 .dark-mode .modal-btn-cancel {
-  background-color: var(--card-bg-dark);
+  background-color: var(--bg-dark);
   color: var(--text-dark-muted);
   border-color: var(--border-dark);
 }
@@ -911,7 +973,7 @@ body.dark-mode {
 .icon-option.selected {
   color: var(--primary-color);
   border-color: var(--primary-color);
-  background-color: rgba(0, 173, 181, 0.1);
+  background-color: rgba(0, 92, 171, 0.1);
 }
 
 /* ==============================================
@@ -978,12 +1040,13 @@ body.dark-mode {
   font-size: 0.95em;
   color: var(--text-light);
   text-decoration: none;
+  font-family: var(--font-ui);
 }
 .dark-mode .profile-dropdown a {
   color: var(--text-dark);
 }
 .profile-dropdown a:hover {
-  background-color: rgba(0, 173, 181, 0.1);
+  background-color: rgba(0, 92, 171, 0.1);
   color: var(--primary-color);
 }
 .profile-dropdown a i {
@@ -1067,6 +1130,7 @@ body.dark-mode {
   color: var(--text-light-muted);
   border-radius: 6px;
   transition: all 0.2s ease;
+  font-family: var(--font-ui);
 }
 .dark-mode .settings-menu a.nav-tab {
   color: var(--text-dark-muted);
@@ -1084,7 +1148,7 @@ body.dark-mode {
   background-color: var(--card-bg-dark);
 }
 .settings-menu a.nav-tab.active {
-  background-color: rgba(0, 173, 181, 0.1);
+  background-color: rgba(0, 92, 171, 0.1);
   color: var(--primary-color);
   font-weight: 600;
 }
@@ -1158,13 +1222,6 @@ body.dark-mode {
 /* ==============================================
    10. FONT BOYUTU CLASS'LARI
    ============================================== */
-
-#summaryOutput {
-  line-height: 1.7;
-  white-space: pre-wrap;
-  font-size: 1rem; 
-  transition: font-size 0.2s ease;
-}
 body.font-size-small #summaryOutput {
   font-size: 0.85rem;
 }
@@ -1219,6 +1276,7 @@ body.font-size-large #summaryOutput {
   background-color: #e74c3c;
   color: white;
   font-size: 0.9rem;
+  font-family: var(--font-ui);
 }
 .modal-btn-danger:hover {
   background-color: #c0392b;
@@ -1237,6 +1295,7 @@ body.font-size-large #summaryOutput {
   cursor: pointer;
   font-weight: bold;
   font-size: 0.9rem;
+  font-family: var(--font-ui);
 }
 .dark-mode .font-btn {
   background-color: var(--card-bg-dark);
@@ -1254,6 +1313,7 @@ body.font-size-large #summaryOutput {
   border-color: var(--primary-color);
   color: white;
 }
+
 /* ==============================================
    14. GENEL SAYFA ARKAPLAN ANİMASYONU (Floating Squares)
    ============================================== */
@@ -1269,7 +1329,6 @@ body.font-size-large #summaryOutput {
   pointer-events: none; 
 }
 
-
 .site-background-animation:before,
 .site-background-animation:after {
   content: '';
@@ -1280,27 +1339,32 @@ body.font-size-large #summaryOutput {
   height: 30vh; 
 }
 
-
 .site-background-animation:before {
   top: 0;
-  background: linear-gradient(to bottom, var(--bg-light) 0%, rgba(238,238,238,0) 100%);
+  background: linear-gradient(to bottom, var(--bg-light) 0%, rgba(250,250,250,0) 100%);
 }
 .site-background-animation:after {
   bottom: 0;
-  background: linear-gradient(to top, var(--bg-light) 0%, rgba(238,238,238,0) 100%);
-}
-.site-background-animation .square {
-  background-color: #0ad5e2 
+  background: linear-gradient(to top, var(--bg-light) 0%, rgba(250,250,250,0) 100%);
 }
 
 body.dark-mode .site-background-animation:before {
-  background: linear-gradient(to bottom, var(--bg-dark) 0%, rgba(34,40,49,0) 100%);
+  background: linear-gradient(to bottom, var(--bg-dark) 0%, rgba(18,18,18,0) 100%);
 }
 body.dark-mode .site-background-animation:after {
-  background: linear-gradient(to top, var(--bg-dark) 0%, rgba(34,40,49,0) 100%);
+  background: linear-gradient(to top, var(--bg-dark) 0%, rgba(18,18,18,0) 100%);
+}
+
+/* Kare Renkleri */
+.site-background-animation .square {
+  background-color: rgba(5, 61, 111, 0.452); /* Hafif Science Blue */
 }
 body.dark-mode .site-background-animation .square {
-  background-color: #008C95 
+  background-color: rgba(80, 179, 254, 0.448);
+}
+/* Sepya modunda kareler turuncumsu */
+body.sepia-mode .site-background-animation .square {
+  background-color: rgba(235, 103, 15, 0.27);
 }
 
 /* --- Karelerin Yapısı ve Hareketi --- */
@@ -1394,7 +1458,7 @@ body.dark-mode .site-background-animation .square {
   }
   50% { 
     transform: scale(1.1);
-    fill: rgba(0, 173, 181, 0.2); /* İçini hafif doldur */
+    fill: rgba(0, 92, 171, 0.2); /* İçini hafif doldur */
     stroke-width: 4px;
   }
 }
@@ -1456,58 +1520,674 @@ body.dark-mode .site-background-animation .square {
   width: 20px; /* Zıplamayı önlemek için sabit genişlik */
   text-align: left;
 }
+/* ARKAPLAN KATMANINI DÜZELTİYORUZ */
+.site-background-animation {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* ESKİSİ: z-index: -1; */
+  /* YENİSİ: z-index: 0; -> Kareleri öne, görünür alana çekiyoruz */
+  z-index: 0; 
+  overflow: hidden;
+  pointer-events: none; /* Boş yerlere tıklayınca arkaya geçsin */
+}
 
-/* ==============================================
-   16. INTERAKTİF ARKAPLAN EFEKTLERİ
-   ============================================== */
-
+/* KARELERİN TIKLANABİLİRLİĞİ */
 .squares {
-  transition: transform 0.1s ease-out; 
-  will-change: transform;
-  width: 110%;
-  height: 110%;
-  margin-left: -5%;
-  margin-top: -5%;
-  pointer-events: none; 
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .square {
-  transition: background-color 0.3s, box-shadow 0.3s, filter 0.3s, transform 0.3s;
-  pointer-events: auto; 
+  /* Kareler tıklamayı yakalasın */
+  pointer-events: auto !important; 
+  cursor: pointer;
+  z-index: 1; /* Kareler kendi katmanında önde olsun */
 }
 
+/* ANA İÇERİĞİ DAHA ÖNE ALIYORUZ Kİ KARELER YAZILARI KAPATMASIN */
+#main-content-container {
+  position: relative;
+  /* İçerik, karelerin (z-index: 0) üstünde durmalı */
+  z-index: 10; 
+}
+
+#sidebar.gemini-sidebar {
+  /* Sidebar en üstte kalmaya devam etsin */
+  z-index: 1001; 
+}
+
+/* Eğer kartların arkasında kalan karelere tıklanmasın istiyorsan bu yeterli. */
+
+/* --- HOVER EFEKTLERİ (MODA GÖRE RENK DEĞİŞİMİ) --- */
+
+/* 1. LIGHT MOD (Varsayılan) - Parlak Mavi */
 .square:hover {
-  background-color: #4FFFFF !important; 
+  background-color: #42A5F5 !important; /* Daha açık, canlı mavi */
   opacity: 1 !important;
-  box-shadow: 0 0 20px #4FFFFF, 0 0 40px #4FFFFF;
+  box-shadow: 0 0 20px #42A5F5, 0 0 40px #42A5F5; /* Mavi Glow */
   filter: blur(0) !important;
-  transform: scale(1.2);
+  transform: scale(1.3); /* Biraz daha büyüsün */
   cursor: default !important; 
   z-index: 10;
 }
 
+/* 2. DARK MOD - Neon Turkuaz */
+body.dark-mode .square:hover {
+  background-color: #00E5FF !important; /* Neon Cyan */
+  box-shadow: 0 0 20px #00E5FF, 0 0 40px #00E5FF; /* Cyan Glow */
+}
+
+/* 3. SEPIA MOD - Parlak Turuncu/Amber */
+body.sepia-mode .square:hover {
+  background-color: #FFB74D !important; /* Açık Turuncu */
+  box-shadow: 0 0 20px #FFB74D, 0 0 40px #FFB74D; /* Amber Glow */
+}
+
 /* ==============================================
-   17. KARE PATLAMA EFEKTİ (onClick)
+   17. KARE PATLAMA EFEKTİ (onClick - GÜNCELLENDİ)
    ============================================== */
 
+/* ==============================================
+   PATLAMA EFEKTİ CSS (MUTLAKA EKLE)
+   ============================================== */
+
+/* Patlama Parçacığı (Oluşacak daire) */
 .explosion-particle {
-  position: fixed;
-  border-radius: 10%;
-  background-color: #4FFFFF; 
-  box-shadow: 0 0 30px #4FFFFF;
-  pointer-events: none; 
-  z-index: 100;
-  animation: explodeReal 0.5s forwards;
+    position: fixed;
+    width: 50px;       /* Görünür olması için boyut */
+    height: 50px;
+    border-radius: 50%; /* Yuvarlak olsun */
+    background-color: #42A5F5; /* Mavi renk (Varsayılan) */
+    box-shadow: 0 0 30px #42A5F5, 0 0 50px white; /* Parlama efekti */
+    pointer-events: none; /* Tıklamayı engellemesin */
+    z-index: 9999; /* HER ŞEYİN EN ÜSTÜNDE OLSUN */
+    transform: translate(-50%, -50%) scale(1); /* Ortalamak için */
+    animation: explodeAnim 0.5s forwards; /* Animasyon oynasın */
 }
 
-@keyframes explodeReal {
-  0% {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4) rotate(45deg); 
-    opacity: 0;
-    filter: blur(10px); 
-  }
+/* Animasyon Tanımı */
+@keyframes explodeAnim {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(4); /* 4 kat büyüsün */
+        opacity: 0; /* Yok olsun */
+    }
 }
+
+/* Modlara Göre Renk Değişimi */
+body.dark-mode .explosion-particle {
+    background-color: #00E5FF;
+    box-shadow: 0 0 30px #00E5FF, 0 0 50px white;
+}
+
+body.sepia-mode .explosion-particle {
+    background-color: #FFB74D;
+    box-shadow: 0 0 30px #FFB74D, 0 0 50px white;
+}
+
+/* KARELERİN TIKLANABİLİR OLMASI İÇİN (Z-INDEX AYARI) */
+.site-background-animation {
+    z-index: 1; /* Arka planda ama body'nin üstünde */
+    pointer-events: none; /* Boşluklara tıklayınca arkaya geçsin */
+}
+
+.square {
+    pointer-events: auto !important; /* Kareler tıklamayı yakalasın */
+    cursor: pointer; /* Üstüne gelince el işareti çıksın */
+}
+
+/* ==============================================
+   PATLAMA EFEKTİ VE KARELERİN CSS'İ (GÜNCELLENDİ)
+   ============================================== */
+
+/* 1. Karelerin Temel Ayarları (Geçişler önemli) */
+.site-background-animation {
+    /* Kareleri görünür katmana alıyoruz */
+    z-index: 1; 
+    /* Boşluklara tıklayınca arkadaki içerik seçilebilsin */
+    pointer-events: none; 
+}
+
+.square {
+    /* Karelerin kendisine tıklanabilsin */
+    pointer-events: auto !important; 
+    cursor: pointer;
+    /* Renk ve kaybolma geçişleri yumuşak olsun */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 2. Patlama Parçacığı (Temel Şekil) */
+/* NOT: Renkler artık JavaScript'ten dinamik gelecek */
+.explosion-particle {
+    position: fixed;
+    width: 60px;        /* Boyutu biraz büyüttük */
+    height: 60px;
+    border-radius: 50%; /* Tam yuvarlak */
+    pointer-events: none; /* Tıklamayı engelle */
+    z-index: 9999; /* En üstte */
+    /* Merkezi hizalama ve başlangıç pozisyonu */
+    transform: translate(-50%, -50%) scale(0.5); 
+    animation: explodeAnim 0.6s forwards ease-out; /* Animasyon süresi */
+}
+
+/* 3. Patlama Animasyonu */
+@keyframes explodeAnim {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(4); /* 4 katına çıkar */
+        opacity: 0; /* Yok ol */
+        filter: blur(10px); /* Bulanıklaş */
+    }
+}
+/* ==============================================
+   SEGMENTED CONTROL (KARE KUTU) TASARIMI
+   ============================================== */
+.reading-mode-container {
+  margin-bottom: 25px;
+  text-align: left; /* Center yerine Left yaptık */
+  padding-left: 5px; /* Hizalamayı görsel olarak dengelemek için */
+}
+
+.mode-label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text-light-muted);
+  font-size: 0.9em;
+  font-family: var(--font-ui);
+}
+
+.segmented-control {
+  display: inline-flex;
+  background-color: rgba(0, 0, 0, 0.05); /* Arka plan gri havuz */
+  padding: 4px;
+  border-radius: 8px; /* Köşeleri yuvarlat */
+  position: relative;
+  user-select: none;
+  border: 1px solid var(--border-light);
+}
+
+/* Orijinal radio butonlarını gizle */
+.segmented-control input[type="radio"] {
+  display: none;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Buton Etiketleri (Görünecek Kısım) */
+.segmented-control label {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--text-light-muted);
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Akıcı geçiş */
+  display: flex;
+  align-items: center;
+  gap: 8px; /* İkon ile yazı arası boşluk */
+}
+
+/* SEÇİLİ DURUM (AKTİF) */
+.segmented-control input[type="radio"]:checked + label {
+  background-color: var(--card-bg-light); /* Kart rengi */
+  color: var(--primary-color); /* ScienceDirect Mavisi */
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); /* Hafif gölge ile kalkma efekti */
+}
+
+/* Hover Efekti */
+.segmented-control label:hover {
+  color: var(--text-light);
+  background-color: rgba(0,0,0,0.02);
+}
+
+/* --- KARANLIK MOD UYUMU --- */
+body.dark-mode .segmented-control {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-dark);
+}
+body.dark-mode .segmented-control input[type="radio"]:checked + label {
+  background-color: var(--card-bg-dark);
+  color: #4dabf5; /* Karanlık modda daha parlak mavi */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ==============================================
+   SEPYA MODU (3. RENK MODU)
+   ============================================== */
+body.sepia-mode {
+  /* Arka Plan: Kindle Sıcaklığı */
+  --bg-light: #FBF0D9;       
+  --card-bg-light: #F4ECD8;
+  
+  /* Metin: Derin Kahve (Gözü yormaz) */
+  --text-light: #5F4B32;     
+  --text-light-muted: #8B7864;
+  --border-light: #D7C6B0;
+  
+  /* Vurgu: Pas Turuncusu (Mavi yerine) */
+  --primary-color: #D35400;  
+  --primary-hover-color: #A04000;
+}
+
+/* Sepya modunda Segmented Control özelleştirmesi */
+body.sepia-mode .segmented-control {
+  background-color: rgba(95, 75, 50, 0.08);
+  border-color: #D7C6B0;
+}
+body.sepia-mode .segmented-control input[type="radio"]:checked + label {
+  background-color: #FBF0D9;
+  color: #D35400;
+}
+
+/* --- Dropdown Menü Tasarımı --- */
+.reading-mode-container {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.select-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0; /* "0 auto" yerine "0" yaptık ki sola yapışsın */
+}
+
+.custom-select {
+  width: 100%;
+  padding: 12px 15px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-light);
+  background-color: var(--card-bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  appearance: none; /* Varsayılan tarayıcı okunu gizle */
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 92, 171, 0.2);
+}
+
+/* Sağdaki Ok İkonu */
+.select-arrow {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light-muted);
+  pointer-events: none; /* Tıklamayı engellemesin */
+  font-size: 0.9em;
+}
+
+/* --- Modlara Göre Renk Uyumu --- */
+
+/* Karanlık Mod */
+body.dark-mode .custom-select {
+  background-color: var(--card-bg-dark);
+  color: var(--text-dark);
+  border-color: var(--border-dark);
+}
+body.dark-mode .select-arrow { color: var(--text-dark-muted); }
+
+/* Sepya Modu */
+body.sepia-mode .custom-select {
+  background-color: #F4ECD8;
+  color: #5F4B32;
+  border-color: #D7C6B0;
+}
+body.sepia-mode .select-arrow { color: #8B7864; }
+
+/* --- 1. Okuma Modu (Sola Dayalı ve Üst Üste) --- */
+.reading-mode-container {
+  margin-bottom: 25px;
+  text-align: left; /* Sola daya */
+  display: flex;
+  flex-direction: column; /* Alt alta diz */
+  align-items: flex-start; /* Sola hizala */
+  width: 100%;
+  max-width: 300px;
+}
+
+.mode-label {
+  display: block;
+  margin-bottom: 8px; /* Kutu ile arasındaki boşluk */
+  font-weight: 600;
+  color: var(--text-light-muted);
+  font-size: 0.95em;
+  font-family: var(--font-ui);
+}
+
+.select-wrapper {
+  width: 100%; /* Konteyner genişliğini doldur */
+  position: relative;
+}
+
+/* --- 2. Header Tema Seçici Grubu (3 Buton) --- */
+.theme-switcher-group {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0,0,0,0.05); /* Hafif gri zemin */
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid var(--border-light);
+}
+
+.theme-btn {
+    background: none;
+    border: none;
+    color: var(--text-light-muted);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+    color: var(--primary-color);
+}
+
+/* Aktif Buton Stili */
+.theme-btn.active {
+    background-color: var(--card-bg-light);
+    color: var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-weight: bold;
+}
+
+/* --- 3. Profil Dropdown Menüsü --- */
+.profile-wrapper {
+    position: relative;
+}
+
+.profile-avatar-btn {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-light-muted);
+    cursor: pointer;
+    padding: 0 10px;
+    transition: color 0.2s;
+}
+.profile-avatar-btn:hover { color: var(--primary-color); }
+
+.profile-dropdown {
+    display: none; /* Varsayılan gizli */
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    min-width: 160px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+/* JS ile 'show' class'ı eklenince görünür */
+.profile-dropdown.show {
+    display: block;
+}
+
+.profile-dropdown a {
+    display: block;
+    padding: 12px 15px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--border-light);
+}
+.profile-dropdown a:last-child { border-bottom: none; }
+.profile-dropdown a:hover { background-color: rgba(0,0,0,0.03); }
+
+/* --- Mod Uyumlulukları --- */
+body.dark-mode .theme-switcher-group { 
+    background-color: rgba(255,255,255,0.1); 
+    border-color: var(--border-dark);
+}
+body.dark-mode .theme-btn.active { 
+    background-color: var(--card-bg-dark); 
+}
+body.dark-mode .profile-dropdown {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-dark);
+}
+body.dark-mode .profile-dropdown a { color: var(--text-dark); border-color: var(--border-dark); }
+
+/* --- AYARLAR MODALI --- */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--card-bg-light);
+  width: 90%; max-width: 400px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease;
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h2 { margin: 0; font-size: 1.2rem; color: var(--text-light); }
+
+.modal-close-icon {
+  background: none; border: none;
+  font-size: 1.5rem; color: var(--text-light-muted);
+  cursor: pointer;
+}
+
+.modal-body { padding: 20px; }
+
+.setting-item { margin-bottom: 20px; }
+.setting-item label { display: block; font-weight: 600; margin-bottom: 10px; color: var(--text-light); }
+
+/* Font Boyutu Butonları */
+.font-size-controls { display: flex; gap: 10px; }
+.font-btn {
+  flex: 1; padding: 8px;
+  background: var(--bg-light); border: 1px solid var(--border-light);
+  border-radius: 6px; cursor: pointer; color: var(--text-light);
+}
+.font-btn.active {
+  background: var(--primary-color); color: #fff; border-color: var(--primary-color);
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  background: rgba(0,0,0,0.02);
+  text-align: right;
+}
+
+/* Modal Animasyonu */
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Karanlık Mod Uyumu */
+body.dark-mode .modal-content { background: var(--card-bg-dark); border-color: var(--border-dark); }
+body.dark-mode .modal-header { border-bottom-color: var(--border-dark); }
+body.dark-mode .font-btn { background: var(--bg-dark); border-color: var(--border-dark); color: var(--text-dark); }
+
+/* --- AKTİF MOD ETİKETİ (Badge) --- */
+.mode-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  font-family: var(--font-ui);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Modlara Göre Renkler */
+.badge-short { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; } /* Mavi */
+.badge-medium { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; } /* Turuncu */
+.badge-long { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }   /* Yeşil */
+
+/* Karanlık Modda Badge */
+body.dark-mode .badge-short { background-color: rgba(21, 101, 192, 0.2); color: #90caf9; border-color: #1565c0; }
+body.dark-mode .badge-medium { background-color: rgba(239, 108, 0, 0.2); color: #ffcc80; border-color: #ef6c00; }
+body.dark-mode .badge-long { background-color: rgba(46, 125, 50, 0.2); color: #a5d6a7; border-color: #2e7d32; }
+
+/* --- HEADER TEMA BUTONU AKTİFLİK DURUMU (İsteğin Üzerine) --- */
+.theme-btn.active {
+    background-color: var(--text-light); /* Koyu bir renk (Siyah/Koyu Gri) */
+    color: var(--bg-light); /* İkon rengi tersine döner */
+    border: 1px solid var(--text-light);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); /* İç gölge ile basılmış hissi */
+    transform: translateY(1px); /* Hafifçe aşağı itilmiş hissi */
+}
+
+/* Karanlık Modda Aktif Buton */
+body.dark-mode .theme-btn.active {
+    background-color: var(--primary-color); /* Mavi yanar */
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+/* Sepya Modda Aktif Buton */
+body.sepia-mode .theme-btn.active {
+    background-color: #D35400; /* Turuncu yanar */
+    color: #fff;
+    border-color: #D35400;
+}
+
+
+/* --- YENİ AYARLAR MODALI STİLLERİ --- */
+.settings-large {
+    max-width: 700px;
+    width: 95%;
+    height: 500px; /* Sabit yükseklik */
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    padding: 0; /* Padding'i sıfırladık */
+}
+
+/* Sol Menü */
+.settings-sidebar {
+    width: 200px;
+    background-color: rgba(0,0,0,0.02);
+    border-right: 1px solid var(--border-light);
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.settings-tab {
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-light-muted);
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.settings-tab:hover { background-color: rgba(0,0,0,0.05); color: var(--text-light); }
+.settings-tab.active { background-color: var(--card-bg-light); color: var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: 600; }
+.settings-tab.text-danger:hover { background-color: rgba(255, 0, 0, 0.05); color: #d32f2f; }
+
+/* Sağ İçerik Paneli */
+.settings-panels {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.settings-panel { display: none; animation: fadeIn 0.3s ease; }
+.settings-panel.active { display: block; }
+
+.settings-panel h3 { margin-top: 0; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; margin-bottom: 20px; }
+
+/* Form Elemanları */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; }
+.small-btn { padding: 8px 16px; font-size: 0.9em; }
+.hint-text { font-size: 0.8em; color: var(--text-light-muted); margin-top: 5px; }
+
+/* Tehlikeli Bölge */
+.text-danger { color: #d32f2f; }
+.danger-box {
+    border: 1px solid rgba(211, 47, 47, 0.3);
+    background-color: rgba(211, 47, 47, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.danger-info p { margin: 5px 0 0 0; font-size: 0.85em; color: var(--text-light-muted); }
+
+.btn-danger-outline {
+    border: 1px solid #d32f2f; color: #d32f2f; background: none;
+    padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+.btn-danger-outline:hover { background-color: #d32f2f; color: #fff; }
+
+.btn-danger-solid {
+    background-color: #d32f2f; color: #fff; border: none;
+    padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+.btn-danger-solid:hover { background-color: #b71c1c; }
+
+/* Karanlık Mod Ayarları */
+body.dark-mode .settings-sidebar { border-color: var(--border-dark); background-color: rgba(255,255,255,0.02); }
+body.dark-mode .settings-tab.active { background-color: var(--bg-dark); }
