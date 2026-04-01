@@ -1,0 +1,27 @@
+# GPU Desteği ile Gereksinimler (RTX 4060 için)
+# Kurulum: pip install -r requirements-gpu.txt
+
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pydantic
+python-multipart
+pymupdf
+pytesseract
+transformers>=4.36.0
+sentencepiece>=0.1.99  # mBART için gerekli
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+yake
+sentence-transformers
+chromadb
+reportlab
+aiofiles
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]
+python-decouple
+google-auth
+accelerate>=0.25.0

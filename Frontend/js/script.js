@@ -1,5 +1,50 @@
-const API_URL = ""; 
+let API_URL = "";
 const GOOGLE_CLIENT_ID = "703815846089-k7oqhi4o4qge65i64q2a9lpd1q654fp0.apps.googleusercontent.com";
+
+function getApiCandidates() {
+    const host = window.location.hostname || "localhost";
+    const protocol = window.location.protocol || "http:";
+    const stored = localStorage.getItem("apiUrl") || "";
+
+    return [
+        "",
+        stored,
+        `${protocol}//${host}:8010`,
+        `${protocol}//${host}:8001`,
+        `${protocol}//${host}:8000`,
+        "http://localhost:8010",
+        "http://localhost:8001",
+        "http://localhost:8000",
+    ].filter((v, i, arr) => v !== null && arr.indexOf(v) === i);
+}
+
+async function resolveApiUrl() {
+    const candidates = getApiCandidates();
+
+    for (const candidate of candidates) {
+        const base = candidate === "" ? "" : candidate.replace(/\/$/, "");
+        const healthUrl = `${base}/health`;
+        try {
+            const res = await fetch(healthUrl, { method: "GET" });
+            if (!res.ok) {
+                continue;
+            }
+
+            const data = await res.json().catch(() => null);
+            if (data?.status === "ok") {
+                API_URL = base;
+                localStorage.setItem("apiUrl", API_URL);
+                console.info("[API] Connected:", API_URL || "same-origin");
+                return;
+            }
+        } catch (_) {
+        }
+    }
+
+    API_URL = "http://localhost:8010";
+    localStorage.setItem("apiUrl", API_URL);
+    console.warn("[API] Could not auto-detect backend, fallback:", API_URL);
+}
 
 // ==============================================
 // === 1. TEMA VE GÖRÜNÜM YÖNETİMİ ===
@@ -299,6 +344,7 @@ function initSettingsModal() {
 // === 5. SAYFA YÜKLEME ===
 // ==============================================
 document.addEventListener("DOMContentLoaded", async () => {
+    await resolveApiUrl();
   applySavedPreferences();
   initBackgroundAnimation(); 
   await loadHeader();
@@ -330,8 +376,71 @@ function initAuthPage() {
   if(loginForm) {
       loginForm.onsubmit = async (e) => {
           e.preventDefault();
-          localStorage.setItem("token", "sample_token"); 
-          window.location.href = "summary.html";
+          const email = document.getElementById('loginEmail')?.value || "";
+          const password = document.getElementById('loginPassword')?.value || "";
+          const errorBox = document.getElementById("error-message-login");
+          if (errorBox) errorBox.textContent = "";
+
+          try {
+              const res = await fetch(`${API_URL}/api/auth/token`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email, password })
+              });
+
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) {
+                  const msg = data.detail || "Giris basarisiz.";
+                  if (errorBox) errorBox.textContent = msg;
+                  return;
+              }
+
+              if (data.access_token) {
+                  localStorage.setItem("token", data.access_token);
+                  window.location.href = "summary.html";
+              } else {
+                  if (errorBox) errorBox.textContent = "Token alinamadi.";
+              }
+          } catch (err) {
+              if (errorBox) errorBox.textContent = `Sunucuya baglanilamadi. API: ${API_URL || 'same-origin'}`;
+              console.error(err);
+          }
+      };
+  }
+
+  const registerForm = document.getElementById('register-form');
+  if (registerForm) {
+      registerForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const errorBox = document.getElementById("error-message-register");
+          if (errorBox) errorBox.textContent = "";
+
+          const payload = {
+              first_name: document.getElementById('firstName')?.value || "",
+              last_name: document.getElementById('lastName')?.value || "",
+              email: document.getElementById('email')?.value || "",
+              password: document.getElementById('password')?.value || "",
+          };
+
+          try {
+              const res = await fetch(`${API_URL}/api/auth/kayit`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload)
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) {
+                  const msg = data.detail || "Kayit basarisiz.";
+                  if (errorBox) errorBox.textContent = msg;
+                  return;
+              }
+              alert("Kayit basarili. Giris yapabilirsiniz.");
+              const container = document.querySelector('.auth-flipper-container');
+              if (container) container.classList.remove('is-flipped');
+          } catch (err) {
+              if (errorBox) errorBox.textContent = `Sunucuya baglanilamadi. API: ${API_URL || 'same-origin'}`;
+              console.error(err);
+          }
       };
   }
 }
@@ -375,18 +484,36 @@ function initSummaryPage() {
               const mode = selectEl ? selectEl.value : "medium";
               formData.append("length_option", mode);
               
+              const langEl = document.getElementById("targetLanguage");
+              const targetLang = langEl ? langEl.value : "turkish";
+              formData.append("target_language", targetLang);
+              
               const res = await fetch(`${API_URL}/api/ozetler/pdf_yukle`, {
                   method: "POST",
                   headers: { 'Authorization': `Bearer ${token}` },
                   body: formData
               });
-              
-              const data = await res.json();
+              const data = await res.json().catch(() => ({}));
+
+              if (!res.ok) {
+                  const errorBox = document.getElementById("form-error-message");
+                  const msg = data.detail || "Sunucu hatasi olustu.";
+                  if (errorBox) {
+                      errorBox.textContent = msg;
+                      errorBox.style.display = "block";
+                  }
+                  if (res.status === 401) {
+                      localStorage.removeItem("token");
+                      window.location.href = "index.html";
+                      return;
+                  }
+                  throw new Error(msg);
+              }
               
               document.getElementById("loading").style.display = "none";
               document.getElementById("result-wrapper").style.display = "block";
               document.getElementById("resultArea").style.display = "block";
-              document.getElementById("summaryOutput").innerHTML = data.ozet_metin;
+              document.getElementById("summaryOutput").innerHTML = data.ozet_metin || "";
               
               // Rozet (Badge) Gösterimi
               const badge = document.getElementById("active-mode-badge");
@@ -395,13 +522,13 @@ function initSummaryPage() {
                   badge.className = "mode-badge"; 
                   let label = "";
                   if(mode === "short") {
-                      label = '<i class="fas fa-bolt"></i> Öz (Abstract)';
+                      label = '<i class="fas fa-bolt"></i> Kısa (30-60 kelime)';
                       badge.classList.add("badge-short");
                   } else if(mode === "medium") {
-                      label = '<i class="fas fa-layer-group"></i> Özet (Standart)';
+                      label = '<i class="fas fa-layer-group"></i> Orta (150-400 kelime)';
                       badge.classList.add("badge-medium");
                   } else {
-                      label = '<i class="fas fa-align-left"></i> Detaylı (Tam Metin)';
+                      label = '<i class="fas fa-align-left"></i> Uzun (500-1500 kelime)';
                       badge.classList.add("badge-long");
                   }
                   badge.innerHTML = label;

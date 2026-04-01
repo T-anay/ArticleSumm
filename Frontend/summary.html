@@ -77,15 +77,29 @@
         </div>
 
         <div class="reading-mode-container">
-          <label for="summaryLength" class="mode-label">Okuma Modu:</label>
+          <label for="summaryLength" class="mode-label">Özet Uzunluğu:</label>
           <div class="select-wrapper">
             <select id="summaryLength" name="summaryLength" class="custom-select">
-              <option value="short" selected>⚡ Öz (Abstract)</option>
-              <option value="medium">📚 Özet (Mobil)</option>
-              <option value="long">📄 Detaylı (Tam Metin)</option>
+              <option value="short">⚡ Kısa (30-60 kelime, %5)</option>
+              <option value="medium" selected>📚 Orta (150-400 kelime, %15)</option>
+              <option value="long">📄 Uzun (500-1500 kelime, %25)</option>
             </select>
             <i class="fas fa-chevron-down select-arrow"></i>
           </div>
+        </div>
+
+        <div class="reading-mode-container">
+          <label for="targetLanguage" class="mode-label">Hedef Dil:</label>
+          <div class="select-wrapper">
+            <select id="targetLanguage" name="targetLanguage" class="custom-select">
+              <option value="english" selected>🇬🇧 English (AI Model)</option>
+              <option value="turkish" disabled>🇹🇷 Türkçe (Yakında)</option>
+            </select>
+            <i class="fas fa-chevron-down select-arrow"></i>
+          </div>
+          <p class="hint-text" style="font-size: 0.85rem; margin-top: 0.5rem; opacity: 0.8;">
+            ⚠️ BART modeli İngilizce eğitilmiştir. Türkçe destek için çeviri özelliği yakında eklenecek.
+          </p>
         </div>
 
         <div class="actions">

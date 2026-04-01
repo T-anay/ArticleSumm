@@ -21,7 +21,7 @@ class Ozet(Base):
     ozet_metin = Column(Text, nullable=False)
     etiketler = Column(String(1000), nullable=True)
     sahip_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    tarih = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     icon_name = Column(String(50), nullable=True, default="fa-file-lines")
     is_pinned = Column(Boolean, nullable=True, default=False)

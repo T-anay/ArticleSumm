@@ -5,9 +5,13 @@ from app.db.database import get_db
 from app.schemas.schemas import OzetCreate, OzetOut, OzetListItem, OzetUpdate
 from app.core.auth_helper import get_current_user
 from app.services.ozet_service import create_ozet, list_ozetler, get_ozet, delete_ozet, update_ozet, delete_all_summaries
-import fitz  
 import io
 import asyncio
+
+try:
+    import fitz
+except ImportError:
+    fitz = None
 
 router = APIRouter(prefix="/api/ozetler", tags=["Ozetler"])
 
@@ -15,13 +19,46 @@ router = APIRouter(prefix="/api/ozetler", tags=["Ozetler"])
 async def create_summary_from_pdf(
     baslik: str = Form(...),
     file: UploadFile = File(...),
-    # Varsayılan: Mobil/Lay Summary (Orta)
-    length_option: str = Form("medium"), 
+    length_option: str = Form("medium"),  # short | medium | long
+    target_language: str = Form("en"),  # Target language code (en, tr, de, fr, es, it, etc.)
+    source_language: str = Form("auto"),  # Source language code or 'auto' for detection
     db: Session = Depends(get_db), 
     current_user = Depends(get_current_user)
 ):
+    """
+    Create summary from PDF file with MULTILINGUAL support.
+    
+    NEW V3.0 FEATURES:
+    - ✅ 50+ languages supported (Turkish, English, German, French, Spanish, etc.)
+    - ✅ Auto language detection
+    - ✅ Cross-lingual summarization (e.g., Turkish PDF → English summary)
+    - ✅ Author information removed
+    
+    Supported Languages:
+        - English (en), Turkish (tr), German (de), French (fr), Spanish (es)
+        - Italian (it), Russian (ru), Arabic (ar), Japanese (ja), Korean (ko)
+        - Chinese (zh), Dutch (nl), Portuguese (pt), Hindi (hi)
+        - And 35+ more languages
+    
+    Length Modes:
+        - short: 30-60 words (article topic, mobile-friendly)
+        - medium: 10% of original text
+        - long: 25% of original text
+    
+    Examples:
+        - Turkish PDF + target='en' → English summary
+        - English PDF + target='tr' → Turkish summary
+        - German PDF + target='fr' → French summary
+        - source='auto' → Auto-detects PDF language
+    """
+    if fitz is None:
+        raise HTTPException(
+            status_code=503,
+            detail="PDF ozeti su anda kullanilamiyor. Sunucuda PyMuPDF paketi eksik."
+        )
+
     if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Sadece PDF dosyaları kabul edilmektedir.")
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
     
     orijinal_metin = ""
     try:
@@ -31,41 +68,44 @@ async def create_summary_from_pdf(
                 orijinal_metin += page.get_text()
         
         if not orijinal_metin.strip():
-            raise HTTPException(status_code=400, detail="PDF'den metin çıkarılamadı.")
+            raise HTTPException(status_code=400, detail="Could not extract text from PDF.")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF işlenirken hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
     
-    # --- AKADEMİK MANTIK KAPISI (LOGIC GATES) ---
-    # Kaynak: Akademik Makale Uzunluğu Raporu
+    # --- ACADEMIC LOGIC GATES ---
+    # Source: Academic Article Length Report
     kelime_sayisi = len(orijinal_metin.split())
 
-    # Kural: Orijinal metin 1000 kelimeden azsa, "Uzun Özet" (Executive Summary)
-    # oluşturmak AI halüsinasyonuna yol açar. Otomatik olarak "Orta"ya düşürülür.
+    # Rule: If original text < 1000 words, "long" summary may cause AI hallucination.
+    # Automatically downgrade to "medium".
     final_length_option = length_option
     if length_option == "long" and kelime_sayisi < 1000:
         final_length_option = "medium"
 
-    # --- AYARLAR (SETTINGS) ---
-    # Kaynak: UX ve Akademik Raporlar
+    # --- LENGTH SETTINGS ---
+    # NEW TARGETS (aligned with academic standards):
+    # Short: 30-60 words (article topic, mobile-friendly)
+    # Medium: 10% of original text
+    # Long: 25% of original text
     settings = {
         "short": {
             "mode": "abstract",
-            "max_tokens": 120,      # ~40-50 kelime (The Glance)
-            "hard_limit_chars": 600,
-            "format_instruction": "inverted_pyramid" # Ters Piramit: En önemli bilgi en başta
+            "target_words": "30-60",       # What the article is about
+            "hard_limit_chars": 500,       # Mobile-friendly
+            "format_instruction": "inverted_pyramid"  # Most important info first
         },
         "medium": {
             "mode": "lay_summary",
-            "max_tokens": 750,      # ~250-300 kelime (The Scan)
-            "hard_limit_chars": 2500,
-            "format_instruction": "smart_brevity"   # Axios Tarzı: Bold girişler, maddeler
+            "target_words": "10%",         # 10% of original text
+            "hard_limit_chars": 3000,
+            "format_instruction": "smart_brevity"  # Clear, concise
         },
         "long": {
             "mode": "executive",
-            "max_tokens": 2000,     # ~1000+ kelime (The Study)
-            "hard_limit_chars": 10000,
-            "format_instruction": "hierarchical"    # H2, H3 Başlıklar, ToC uyumlu
+            "target_words": "25%",         # 25% of original text
+            "hard_limit_chars": 15000,
+            "format_instruction": "hierarchical"  # Structured with sections
         }
     }
     
@@ -74,14 +114,16 @@ async def create_summary_from_pdf(
     # Test Gecikmesi (Yükleme animasyonunu görmek için)
     await asyncio.sleep(3) 
 
-    # Servise format bilgisini de gönderiyoruz (length_option parametresi ile)
+    # Multilingual summarization
     new = create_ozet(
         db, 
         baslik, 
         orijinal_metin, 
         current_user.id, 
         max_chars=config["hard_limit_chars"],
-        length_mode=final_length_option # Servise hangi modda olduğunu bildir
+        length_mode=final_length_option,
+        target_language=target_language,  # Target language code (e.g., 'en', 'tr', 'de')
+        source_language=source_language   # Source language code or 'auto'
     )
     return new
 

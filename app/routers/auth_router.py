@@ -2,8 +2,6 @@
 import os
 from email.message import EmailMessage
 import smtplib
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
@@ -36,6 +34,13 @@ from app.schemas.schemas import (
 )
 from app.models.models import User
 from app.core.auth_helper import get_current_user
+
+try:
+    from google.oauth2 import id_token
+    from google.auth.transport import requests
+except ImportError:
+    id_token = None
+    requests = None
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
@@ -137,6 +142,11 @@ def delete_account(
 
 @router.post("/google-login", response_model=Token)
 def google_login(data: GoogleToken, db: Session = Depends(get_db)):
+    if id_token is None or requests is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google girisi su anda kullanilamiyor. Sunucuda google-auth paketi eksik."
+        )
     
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     if not GOOGLE_CLIENT_ID:

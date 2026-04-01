@@ -37,7 +37,7 @@ class OzetOut(BaseModel):
     icon_name: Optional[str]
     is_pinned: Optional[bool]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class OzetListItem(BaseModel):
     id: int
@@ -47,7 +47,7 @@ class OzetListItem(BaseModel):
     icon_name: Optional[str]
     is_pinned: Optional[bool]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserPublic(BaseModel):
     """Şifre olmadan, dışarıya verilecek kullanıcı modeli"""
@@ -56,7 +56,7 @@ class UserPublic(BaseModel):
     last_name: str
     email: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserUpdate(BaseModel):
     """Kullanıcının güncelleyebileceği alanlar (Sadece Ad/Soyad)"""

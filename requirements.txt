@@ -1,19 +1,33 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-pydantic
-python-multipart
-pymupdf
-pytesseract
-transformers==4.44.0
-torch==2.4.0+cpu
---extra-index-url https://download.pytorch.org/whl/cpu
-yake
-reportlab
-aiofiles
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.0.1
-python-jose[cryptography]
-python-decouple
-google-auth
+python-dotenv==1.0.1
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+alembic==1.14.0
+PyMuPDF>=1.23.0
+google-auth==2.28.2
+google-auth-oauthlib==1.2.0
+requests==2.31.0
+
+# AI/ML Kütüphaneleri - GÜNCELLENMIŞ
+torch>=2.0.0  # Esnek versiyon
+transformers>=4.36.0
+sentence-transformers>=2.3.0
+yake>=0.4.8
+accelerate>=0.25.0  # GPU desteği için
+langdetect>=1.0.9  # Dil algılama
+sentencepiece>=0.1.99  # mBART tokenizer için
+sacremoses>=0.0.53  # Metin ön işleme
+
+# ChromaDB (opsiyonel)
+chromadb>=0.4.22
+
+# Geliştirme
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx==0.28.1
