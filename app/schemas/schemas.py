@@ -1,6 +1,7 @@
 # app/schemas/schemas.py
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
 class UserCreate(BaseModel):
     first_name: str
@@ -19,6 +20,26 @@ class Token(BaseModel):
 class OzetCreate(BaseModel):
     baslik: str
     orijinal_metin: str
+    calisma_id: Optional[int] = None
+
+
+class CalismaCreate(BaseModel):
+    baslik: str
+
+
+class CalismaUpdate(BaseModel):
+    baslik: Optional[str] = None
+    is_pinned: Optional[bool] = None
+
+
+class CalismaOut(BaseModel):
+    id: int
+    baslik: str
+    sahip_id: int
+    is_pinned: Optional[bool] = None
+    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
 
 class OzetUpdate(BaseModel):
     baslik: Optional[str] = None
@@ -26,6 +47,7 @@ class OzetUpdate(BaseModel):
     is_pinned: Optional[bool] = None
     ozet_metin: Optional[str] = None
     etiketler: Optional[str] = None
+    calisma_id: Optional[int] = None
 
 class OzetOut(BaseModel):
     id: int
@@ -34,6 +56,7 @@ class OzetOut(BaseModel):
     ozet_metin: str
     etiketler: Optional[str]
     sahip_id: int
+    calisma_id: Optional[int]
     icon_name: Optional[str]
     is_pinned: Optional[bool]
     class Config:
@@ -44,6 +67,7 @@ class OzetListItem(BaseModel):
     baslik: str
     ozet_metin: str
     etiketler: Optional[str]
+    calisma_id: Optional[int]
     icon_name: Optional[str]
     is_pinned: Optional[bool]
     class Config:

@@ -3,180 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geçmiş Özetlerim - ArticleSumm</title>
-    <link rel="stylesheet" href="/css/styles.css"> <script src="/js/script.js" defer></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Geçmiş Çalışmalar - ArticleSumm</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="js/script.js" defer></script>
 </head>
-<body>
-    <div class="site-content"> <main class="container">
-            <section class="card"> <h2>Geçmiş Özetlerim</h2>
+<body class="history-page-body">
+    <div class="history-shell">
+        <header class="history-hero card">
+            <div>
+                <p class="eyebrow">Geçmiş</p>
+                <h1>Çalışmalarınız</h1>
+                <p class="history-lead">Her çalışma altında birden fazla özeti bir arada saklayın, sonra tekrar açıp devam edin.</p>
+            </div>
+            <a class="secondary-link" href="summary.html">+ Yeni özet oluştur</a>
+        </header>
 
-                <div id="history-list-container">
-                    <p id="loading-message">Özetler yükleniyor...</p>
-                    <div id="history-list">
-                        </div>
-                     <p id="no-history-message" style="display: none;">Henüz oluşturulmuş bir özetiniz bulunmuyor.</p>
-                     <div id="history-error-message" style="color: red; display: none;"></div> </div>
+        <section class="history-layout">
+            <aside class="card workspace-sidebar-card">
+                <div class="card-header-row">
+                    <h2>Çalışmalar</h2>
+                </div>
 
-                </section>
-        </main>
-    </div> <footer>
-        <div class="footer-content">
-          <p>© 2025 ArticleSumm | Tüm Hakları Saklıdır.</p>
-          <div class="social-media">
-             </div>
-          <p class="contact-info">
-            <i class="fas fa-envelope"></i> contact@articlesumm.com
-          </p>
-        </div>
-      </footer>
+                <form id="create-workspace-form" class="workspace-create-form">
+                    <input id="workspace-title-input" class="modal-input" type="text" placeholder="Örn. Makale 1 / Tez / Proje" required>
+                    <button type="submit" class="primary-btn small-btn">Çalışma Oluştur</button>
+                </form>
 
-      <div id="feedback-widget">
-        <div id="feedback-toggle">📝 Geri Bildir</div>
-        <div id="feedback-box" class="hidden">
-          <h4>Platformu nasıl buldunuz?</h4>
-          <div id="star-rating">
-            <span class="star" data-value="1">☆</span>
-            <span class="star" data-value="2">☆</span>
-            <span class="star" data-value="3">☆</span>
-            <span class="star" data-value="4">☆</span>
-            <span class="star" data-value="5">☆</span>
-          </div>
-          <textarea id="comment" placeholder="Yorum (isteğe bağlı)"></textarea><br>
-          <button id="submit-feedback">Gönder</button>
-          <div id="thankYou" class="hidden">🎉 Teşekkürler! Geri bildiriminiz alındı.</div>
-        </div>
-      </div>
+                <div id="workspace-history-list" class="workspace-chip-list"></div>
+            </aside>
 
-       <script>
-        // Silme işlemi için global fonksiyon
-        async function handleDelete(ozetId) {
-            const historyListDiv = document.getElementById('history-list');
-            const noHistoryMessage = document.getElementById('no-history-message');
-            const errorMessageDiv = document.getElementById('history-error-message');
-
-            if (!confirm(`${ozetId} ID'li özeti silmek istediğinizden emin misiniz?`)) {
-                return;
-            }
-            
-            console.log(`${ozetId} ID'li özet siliniyor...`);
-            
-            try {
-                const token = getToken(); // script.js'den
-                if (!token) throw new Error("Lütfen giriş yapın.");
-
-                const response = await fetch(`/api/ozetler/${ozetId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                     let errorDetail = 'Silme işlemi başarısız.';
-                     try {
-                         const errorData = await response.json();
-                         errorDetail = errorData.detail || errorDetail;
-                     } catch (e) { /* JSON parse hatası olabilir */ }
-                     throw new Error(errorDetail);
-                }
-
-                // Başarılı silme sonrası ilgili elementi sayfadan kaldır
-                const itemToRemove = historyListDiv.querySelector(`[data-id="${ozetId}"]`);
-                if (itemToRemove) {
-                    itemToRemove.remove();
-                }
-                // Liste boş kaldıysa mesajı göster
-                if(historyListDiv.children.length === 0) {
-                     noHistoryMessage.style.display = 'block';
-                }
-                errorMessageDiv.style.display = 'none';
-
-            } catch (error) {
-                console.error('Silme hatası:', error);
-                errorMessageDiv.textContent = error.message || 'Özet silinirken bir hata oluştu.';
-                errorMessageDiv.style.display = 'block';
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Bu korumalı bir sayfa, token yoksa login'e yönlendir
-            checkLoginStatus(true); 
-
-            const historyListDiv = document.getElementById('history-list');
-            const loadingMessage = document.getElementById('loading-message');
-            const noHistoryMessage = document.getElementById('no-history-message');
-            const errorMessageDiv = document.getElementById('history-error-message');
-
-            async function fetchHistory() {
-                console.log("Geçmiş özetler çekiliyor...");
-                loadingMessage.style.display = 'block'; 
-                noHistoryMessage.style.display = 'none';
-                errorMessageDiv.style.display = 'none';
-                historyListDiv.innerHTML = ''; 
-
-                try {
-                    const token = getToken(); // script.js'den
-                    if (!token) {
-                        throw new Error("Lütfen giriş yapın.");
-                    }
-
-                    const response = await fetch('/api/ozetler/', { //
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        const data = await response.json();
-                        throw new Error(data.detail || 'Özetler alınamadı.');
-                    }
-                    
-                    const data = await response.json(); 
-
-                    loadingMessage.style.display = 'none'; 
-
-                    if (data && data.length > 0) {
-                        // Özetleri ters sırada (en yeni en üstte) göster
-                        data.reverse().forEach(item => {
-                            const itemElement = document.createElement('div');
-                            itemElement.classList.add('history-item');
-                            itemElement.dataset.id = item.id; // Silme işlemi için
-
-                            const tagsHtml = item.etiketler
-                                ? item.etiketler.split(',').map(tag => `<span>${tag.trim()}</span>`).join('')
-                                : ''; 
-
-                            // Tıklama olayı eklendi (summary.html'e yönlendirme)
-                            itemElement.innerHTML = `
-                                <div class="history-item-content" data-id="${item.id}">
-                                    <h4><a href="/summary.html?id=${item.id}">${item.baslik || 'Başlıksız Özet'}</a></h4>
-                                    <div class="history-tags">
-                                        ${tagsHtml}
-                                    </div>
-                                </div>
-                                <div class="history-item-actions">
-                                    <button class="delete-button" onclick="handleDelete(${item.id})">Sil</button>
-                                </div>
-                            `;
-                            historyListDiv.appendChild(itemElement);
-                        });
-                    } else {
-                        noHistoryMessage.style.display = 'block'; // Özet yok
-                    }
-
-                } catch (error) {
-                    console.error('Geçmiş yüklenirken hata:', error);
-                    loadingMessage.style.display = 'none';
-                    errorMessageDiv.textContent = error.message || 'Özetler yüklenirken bir hata oluştu.';
-                    errorMessageDiv.style.display = 'block';
-                }
-            }
-
-            // Sayfa yüklendiğinde geçmişi çek
-            fetchHistory();
-        });
-       </script>
-
+            <main class="card workspace-detail-card">
+                <div class="card-header-row">
+                    <div>
+                        <h2 id="workspace-detail-title">Çalışma seçin</h2>
+                        <p id="workspace-detail-meta" class="muted-text"></p>
+                    </div>
+                </div>
+                <div id="workspace-summary-list" class="workspace-summary-grid"></div>
+                <p id="workspace-empty-state" class="empty-state" style="display:none;">Bu çalışma altında henüz özet yok.</p>
+            </main>
+        </section>
+    </div>
 </body>
 </html>

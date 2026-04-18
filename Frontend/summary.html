@@ -41,15 +41,6 @@
     </div>
     
     <div class="sidebar-content">
-      <ul class="sidebar-menu">
-        <li class="active"> 
-          <a href="summary.html">
-            <i class="fas fa-plus"></i>
-            <span>Yeni Damıtma</span>
-          </a>
-        </li>
-      </ul>
-
       <div class="sidebar-section-title">Geçmiş</div>
       <ul id="summaryList" class="sidebar-menu history">
         <li class="placeholder">Yükleniyor...</li>
@@ -136,7 +127,24 @@
 
         <section id="resultArea" class="card result-card">
           <div class="result-header">
-            <h3>Sonuç</h3>
+            <h3 id="resultTitle">Sonuç</h3>
+            <div class="result-header-actions">
+              <button type="button" id="editSummaryBtn" class="secondary-btn" style="display:none;">Düzenle</button>
+              <button type="button" id="saveSummaryBtn" class="secondary-btn" style="display:none;">Kaydet</button>
+              <button type="button" id="cancelEditSummaryBtn" class="secondary-btn" style="display:none;">Vazgeç</button>
+                <button type="button" id="downloadSummaryBtn" class="secondary-btn" style="display:none;">PDF İndir</button>
+            </div>
+          </div>
+
+          <div id="summaryEditorToolbar" class="summary-editor-toolbar" style="display:none;">
+            <button type="button" class="editor-tool-btn" data-cmd="bold"><i class="fas fa-bold"></i></button>
+            <button type="button" class="editor-tool-btn" data-cmd="italic"><i class="fas fa-italic"></i></button>
+            <button type="button" class="editor-tool-btn" data-cmd="underline"><i class="fas fa-underline"></i></button>
+            <button type="button" class="editor-tool-btn" data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+            <button type="button" class="editor-tool-btn" data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+            <button type="button" class="editor-tool-btn" data-cmd="formatBlock" data-value="h2">H2</button>
+            <button type="button" class="editor-tool-btn" data-cmd="formatBlock" data-value="h3">H3</button>
+            <button type="button" class="editor-tool-btn" data-cmd="removeFormat">Temizle</button>
           </div>
           
           <div id="active-mode-badge" class="mode-badge" style="display:none;"></div> 
@@ -205,7 +213,18 @@
             </div>
             <div class="setting-item">
               <label>Tema</label>
-              <p class="hint-text">Tema değiştirmek için sayfanın sağ üst köşesindeki ikonları kullanabilirsiniz.</p>
+              <div class="theme-switcher-group page-theme-select">
+                <button class="theme-btn" data-mode="light" title="Gündüz">
+                  <i class="fas fa-sun"></i> Gündüz
+                </button>
+                <button class="theme-btn" data-mode="sepia" title="Okuma">
+                  <i class="fas fa-book-open"></i> Okuma
+                </button>
+                <button class="theme-btn" data-mode="dark" title="Gece">
+                  <i class="fas fa-moon"></i> Gece
+                </button>
+              </div>
+              <p class="hint-text">Seçtiğiniz tema tüm sayfalarda uygulanır.</p>
             </div>
           </div>
 

@@ -7,6 +7,11 @@ import hashlib
 import hmac
 import os
 
+try:
+    import bcrypt as pyca_bcrypt
+except ImportError:
+    pyca_bcrypt = None
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 PBKDF2_ITERATIONS = 600_000
 PBKDF2_SCHEME = "pbkdf2_sha256"
@@ -53,7 +58,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     if hashed_password.startswith(f"{PBKDF2_SCHEME}$"):
         return _verify_pbkdf2(plain_password, hashed_password)
 
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception:
+        # Legacy bcrypt hashes can fail on some passlib/bcrypt version combos.
+        if pyca_bcrypt is None or not hashed_password.startswith(("$2a$", "$2b$", "$2y$")):
+            return False
+        try:
+            return pyca_bcrypt.checkpw(
+                plain_password.encode("utf-8"),
+                hashed_password.encode("utf-8"),
+            )
+        except Exception:
+            return False
 
 def create_access_token(data: dict, expires_minutes: int | None = None) -> str:
     to_encode = data.copy()
