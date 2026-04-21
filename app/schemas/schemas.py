@@ -20,6 +20,9 @@ class Token(BaseModel):
 class OzetCreate(BaseModel):
     baslik: str
     orijinal_metin: str
+    length_option: str = "medium"
+    target_language: str = "en"
+    source_language: str = "auto"
     calisma_id: Optional[int] = None
 
 

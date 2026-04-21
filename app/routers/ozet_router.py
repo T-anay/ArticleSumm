@@ -133,7 +133,16 @@ async def create_summary_from_pdf(
 # ... (Diğer router fonksiyonları değişmedi: metin, get, delete vb.) ...
 @router.post("/metin", response_model=OzetOut)
 def create_summary_from_text(payload: OzetCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    new = create_ozet(db, payload.baslik, payload.orijinal_metin, current_user.id, calisma_id=payload.calisma_id)
+    new = create_ozet(
+        db,
+        payload.baslik,
+        payload.orijinal_metin,
+        current_user.id,
+        length_mode=payload.length_option,
+        target_language=payload.target_language,
+        source_language=payload.source_language,
+        calisma_id=payload.calisma_id,
+    )
     return new
 
 @router.get("/", response_model=list[OzetListItem])

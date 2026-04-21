@@ -102,6 +102,13 @@ def _target_word_count(length_mode: str, original_word_count: int) -> int:
     return max(60, int(original_word_count * 0.10))
 
 
+def _is_fast_english_medium_mode(length_mode: str, target_language: str) -> bool:
+    """Fast mode flag for the most latency-sensitive user flow."""
+    if os.getenv("FAST_ENGLISH_MEDIUM_MODE", "true").strip().lower() != "true":
+        return False
+    return length_mode == "medium" and _normalize_lang_code(target_language) == "en"
+
+
 def _summarize_with_external_api(
     text: str,
     source_language: str,
@@ -207,6 +214,202 @@ def _is_mostly_english(text: str) -> bool:
         return False
     
     return True
+
+
+def _is_mostly_turkish(text: str) -> bool:
+    """Heuristic Turkish check used for output language guardrails."""
+    import re
+    if not text or len(text.strip()) < 10:
+        return False
+
+    text_lower = text.lower()
+    turkish_chars = len(re.findall(r'[çğışöüÇĞİŞÖÜ]', text))
+    words = re.findall(r'\b\w+\b', text_lower)
+    if not words:
+        return False
+
+    common_tr_words = {
+        've', 'ile', 'bir', 'bu', 'için', 'olarak', 'daha', 'çok', 'ancak',
+        'sonuç', 'çalışma', 'araştırma', 'gibi', 'olan', 'değil', 'vardır'
+    }
+    hit_count = sum(1 for w in words if w in common_tr_words)
+
+    # Accept if Turkish markers are strong enough and English dominance is low.
+    if turkish_chars >= 2 or hit_count >= max(3, int(len(words) * 0.03)):
+        return not _has_significant_english_content(text)
+    return False
+
+
+def _has_significant_english_content(text: str) -> bool:
+    """Detect when text is strongly English or mixed-English heavy."""
+    import re
+    if not text or len(text.strip()) < 10:
+        return False
+
+    words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
+    if not words:
+        return False
+
+    common_en_words = {
+        'the', 'and', 'is', 'are', 'was', 'were', 'with', 'from', 'that', 'this',
+        'of', 'to', 'in', 'on', 'for', 'as', 'by', 'an', 'a', 'be', 'assessed',
+        'role', 'technological', 'developments', 'artificial', 'intelligence'
+    }
+    en_hits = sum(1 for w in words if w in common_en_words)
+    en_ratio = en_hits / max(1, len(words))
+
+    ascii_only_ratio = sum(1 for ch in text if ord(ch) < 128) / max(1, len(text))
+
+    return en_hits >= 4 or en_ratio >= 0.08 or ascii_only_ratio > 0.95
+
+
+def _repair_mixed_text_for_turkish(summary: str, source_hint: str) -> str:
+    """Repair mixed EN/TR output by translating English-like sentences to Turkish."""
+    import re
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', summary) if s.strip()]
+    if not sentences:
+        return summary
+
+    repaired: List[str] = []
+    source_hint_norm = _normalize_lang_code(source_hint)
+
+    for sentence in sentences:
+        if len(sentence) < 6:
+            continue
+
+        if _is_mostly_turkish(sentence):
+            repaired.append(sentence)
+            continue
+
+        if _is_mostly_english(sentence) or _has_significant_english_content(sentence):
+            try:
+                source_lang = "en"
+                if source_hint_norm in MBART_LANG_CODES:
+                    source_lang = source_hint_norm
+                translated = _translate_with_mbart(sentence, source_lang=source_lang, target_lang="tr")
+                repaired.append(translated.strip() or sentence)
+            except Exception:
+                repaired.append(sentence)
+            continue
+
+        # Keep uncertain sentences only if they already look Turkish-ish.
+        if any(ch in sentence for ch in "çğıöşüÇĞİÖŞÜ"):
+            repaired.append(sentence)
+
+    if not repaired:
+        return summary
+    return " ".join(repaired).strip()
+
+
+def _sanitize_summary_output(text: str) -> str:
+    """Final lightweight cleanup for user-facing summary text."""
+    import re
+    cleaned = _remove_ocr_gibberish(text or "")
+    cleaned = re.sub(r'["\'`]{2,}', '"', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+    # Remove dangling quote at the end if it is unmatched.
+    if cleaned.count('"') % 2 == 1 and cleaned.endswith('"'):
+        cleaned = cleaned[:-1].rstrip()
+
+    # Normalize OCR-spaced version numbers like "3. 0" -> "3.0".
+    cleaned = re.sub(r'(\d)\s*\.\s*(\d)', r'\1.\2', cleaned)
+
+    return cleaned
+
+
+def _looks_like_target_language(text: str, target_language: str) -> bool:
+    """Lightweight target language verification for final outputs."""
+    lang = _normalize_lang_code(target_language)
+    if lang == 'en':
+        return _is_mostly_english(text)
+    if lang == 'tr':
+        return _is_mostly_turkish(text) and not _has_significant_english_content(text)
+
+    if not LANGDETECT_AVAILABLE:
+        return True
+    try:
+        return detect_language(text) == lang
+    except Exception:
+        return False
+
+
+def _translate_with_mbart(text: str, source_lang: str, target_lang: str) -> str:
+    """Translate text with mBART-50 (used as a correctness fallback)."""
+    if not text.strip():
+        return text
+
+    if not is_language_supported(source_lang) or not is_language_supported(target_lang):
+        return text
+
+    model, tokenizer = _get_mbart_model()
+    device = _get_device()
+
+    tokenizer.src_lang = MBART_LANG_CODES[source_lang]
+    chunks = chunk_text(text, chunk_size=1200, chunk_overlap=100)
+    translated_parts: List[str] = []
+
+    for chunk in chunks:
+        inputs = tokenizer(chunk, return_tensors="pt", max_length=1024, truncation=True)
+        if device >= 0:
+            inputs = {k: v.to(f"cuda:{device}") for k, v in inputs.items()}
+
+        outputs = model.generate(
+            **inputs,
+            forced_bos_token_id=tokenizer.lang_code_to_id[MBART_LANG_CODES[target_lang]],
+            num_beams=3,
+            max_length=512,
+            early_stopping=True,
+        )
+        translated_parts.append(tokenizer.decode(outputs[0], skip_special_tokens=True))
+
+    return " ".join(translated_parts).strip()
+
+
+def _enforce_target_language(summary: str, target_language: str, source_hint: str) -> str:
+    """Ensure final summary respects requested target language; auto-fix if needed."""
+    if not summary.strip():
+        return summary
+
+    summary = _sanitize_summary_output(summary)
+
+    target = _normalize_lang_code(target_language)
+
+    if target == "tr" and _has_significant_english_content(summary):
+        print("[LANG GUARD] Mixed EN/TR output detected for Turkish target, repairing...")
+        summary = _repair_mixed_text_for_turkish(summary, source_hint=source_hint)
+
+    if _looks_like_target_language(summary, target):
+        return summary
+
+    print(f"[LANG GUARD] Output does not match target='{target}'. Attempting correction...")
+
+    detected_output = detect_language(summary) if LANGDETECT_AVAILABLE else ""
+    detected_output = _normalize_lang_code(detected_output) if detected_output else ""
+
+    candidate_source = ""
+    if is_language_supported(detected_output):
+        candidate_source = detected_output
+    elif is_language_supported(_normalize_lang_code(source_hint)):
+        candidate_source = _normalize_lang_code(source_hint)
+    elif _is_mostly_english(summary):
+        candidate_source = "en"
+
+    if not candidate_source or not is_language_supported(target):
+        print("[LANG GUARD] Could not determine a valid translation path, returning original output")
+        return summary
+
+    try:
+        fixed = _translate_with_mbart(summary, source_lang=candidate_source, target_lang=target)
+        fixed = _sanitize_summary_output(fixed)
+        if _looks_like_target_language(fixed, target):
+            print(f"[LANG GUARD] Corrected output language: {candidate_source} -> {target}")
+            return fixed
+        print("[LANG GUARD] Correction attempt did not pass language check")
+        return fixed or summary
+    except Exception as lang_fix_err:
+        print(f"[LANG GUARD] Correction failed: {lang_fix_err}")
+        return summary
 
 def _remove_ocr_gibberish(text: str) -> str:
     """Remove OCR artifacts: repeated words, garbled sequences, corrupted text."""
@@ -723,7 +926,8 @@ def summarize_multilingual(
     source_lang: str,
     target_lang: str,
     length_mode: str = "medium",
-    original_word_count: Optional[int] = None
+    original_word_count: Optional[int] = None,
+    fast_mode: bool = False,
 ) -> str:
     """
     Multilingual summarization using mBART-50.
@@ -747,6 +951,8 @@ def summarize_multilingual(
     print(f"\n{'='*60}")
     print(f"[MULTILINGUAL] Source: {LANGUAGE_NAMES.get(source_lang, source_lang)} → Target: {LANGUAGE_NAMES.get(target_lang, target_lang)}")
     print(f"[MULTILINGUAL] Mode: {length_mode}")
+    if fast_mode:
+        print(f"[MULTILINGUAL] Fast mode: enabled")
     
     # Validate language support
     if not is_language_supported(source_lang):
@@ -800,7 +1006,10 @@ def summarize_multilingual(
             print(f"[MULTILINGUAL] Split into {len(chunks)} chunks")
             
             partials = []
-            max_chunks = min(len(chunks), 10 if length_mode == "long" else 5)
+            if fast_mode and length_mode == "medium":
+                max_chunks = min(len(chunks), int(os.getenv("MBART_FAST_MEDIUM_MAX_CHUNKS", "3")))
+            else:
+                max_chunks = min(len(chunks), 10 if length_mode == "long" else 5)
             
             for i, chunk in enumerate(chunks[:max_chunks]):
                 try:
@@ -816,13 +1025,19 @@ def summarize_multilingual(
                         inputs = {k: v.to(f"cuda:{device}") for k, v in inputs.items()}
                     
                     # Generate summary
+                    chunk_min_length = max(20, min_len // max_chunks)
+                    chunk_max_length = min(200, max_len // max_chunks)
+                    if fast_mode and length_mode == "medium":
+                        chunk_min_length = max(18, int(chunk_min_length * 0.8))
+                        chunk_max_length = max(80, int(chunk_max_length * 0.9))
+
                     outputs = model.generate(
                         **inputs,
                         forced_bos_token_id=tokenizer.lang_code_to_id[tgt_lang_code],
-                        min_length=max(20, min_len // max_chunks),
-                        max_length=min(200, max_len // max_chunks),
-                        num_beams=4,
-                        length_penalty=1.5,
+                        min_length=chunk_min_length,
+                        max_length=chunk_max_length,
+                        num_beams=2 if fast_mode else 4,
+                        length_penalty=1.2 if fast_mode else 1.5,
                         early_stopping=True,
                         no_repeat_ngram_size=3
                     )
@@ -865,8 +1080,8 @@ def summarize_multilingual(
                 forced_bos_token_id=tokenizer.lang_code_to_id[tgt_lang_code],
                 min_length=min_len,
                 max_length=max_len,
-                num_beams=4,
-                length_penalty=1.5,
+                num_beams=2 if fast_mode else 4,
+                length_penalty=1.2 if fast_mode else 1.5,
                 early_stopping=True,
                 no_repeat_ngram_size=3
             )
@@ -1259,7 +1474,7 @@ def summarize_with_embeddings(
     title: str,
     length_mode: str,
     max_chars: int,
-    target_language: str = "english",
+    target_language: str = "en",
     source_language: str = "auto",
     db: Optional[Session] = None,
     use_multilingual: bool = True,
@@ -1304,12 +1519,28 @@ def summarize_with_embeddings(
     # PHASE 0: Language Detection
     if source_language == "auto":
         detected_lang = detect_language(text)
-        source_language = detected_lang
+        source_language = _normalize_lang_code(detected_lang)
         print(f"[SUMMARY] Auto-detected source language: {LANGUAGE_NAMES.get(source_language, source_language)}")
     else:
+        source_language = _normalize_lang_code(source_language)
         print(f"[SUMMARY] Source language: {LANGUAGE_NAMES.get(source_language, source_language)}")
+
+    target_language = _normalize_lang_code(target_language)
     
     print(f"[SUMMARY] Target language: {LANGUAGE_NAMES.get(target_language, target_language)}")
+
+    if (
+        not is_language_supported(source_language)
+        and is_language_supported(target_language)
+        and target_language != "en"
+        and _is_mostly_english(text)
+    ):
+        print(f"[SUMMARY] Source '{source_language}' unsupported, falling back to 'en' for multilingual path")
+        source_language = "en"
+
+    fast_english_medium = _is_fast_english_medium_mode(length_mode, target_language)
+    if fast_english_medium:
+        print("[SUMMARY] Fast mode enabled for English medium summary")
     
     # Check if multilingual model is needed
     needs_multilingual = (
@@ -1325,7 +1556,7 @@ def summarize_with_embeddings(
         print(f"[SUMMARY] Using BART for English-only summarization")
     
     
-    # PHASE 1: Clean text (only for English mode, others keep original)
+    # PHASE 1: Clean text
     if source_language == 'en' or not use_multilingual:
         print(f"[SUMMARY] Phase 1: Cleaning English text (removing author info, non-English content)...")
         text = _clean_text(text, strict_english_only=True)
@@ -1335,11 +1566,17 @@ def summarize_with_embeddings(
             print(f"[SUMMARY ERROR] Text too short after cleaning (<100 chars)")
             return "Error: Document contains insufficient English content for summarization."
     else:
-        print(f"[SUMMARY] Phase 1: Skipping English-only cleaning (multilingual mode)")
+        print(f"[SUMMARY] Phase 1: Applying light cleanup for multilingual mode")
+        text = _clean_text(text, strict_english_only=False)
+        text = _sanitize_summary_output(text)
+        print(f"[SUMMARY] After light cleanup: {len(text)} chars, {len(text.split())} words")
     
     # PHASE 2: Load context from database (merge similar previous documents)
-    print(f"[SUMMARY] Phase 2: Loading user context from database...")
-    text = _get_user_context_from_db(db, owner_id, text)
+    if fast_english_medium:
+        print(f"[SUMMARY] Phase 2: Skipping DB context for speed (English medium fast mode)")
+    else:
+        print(f"[SUMMARY] Phase 2: Loading user context from database...")
+        text = _get_user_context_from_db(db, owner_id, text)
     
     # PHASE 3: Skip author sections and find main content
     print(f"[SUMMARY] Phase 3: Identifying main content...")
@@ -1372,6 +1609,7 @@ def summarize_with_embeddings(
                 length_mode=length_mode,
                 original_word_count=original_word_count,
             )
+            ext_summary = _enforce_target_language(ext_summary, target_language=target_language, source_hint=source_language)
             final = _apply_hard_limit(ext_summary, max_chars)
             print(f"[SUMMARY] ✓ External success: {len(final)} chars, {len(final.split())} words")
             print(f"{'='*60}\n")
@@ -1415,7 +1653,30 @@ def summarize_with_embeddings(
     
     try:
         # Choose summarization strategy
-        if needs_multilingual:
+        if length_mode == "short" and source_language == "en" and target_language == "tr":
+            # Safer path for short Turkish summaries: summarize in English first, then translate.
+            print("[SUMMARY] Using safe short TR path: EN summarize -> TR translate")
+            en_short = _summarize_with_transformers(
+                text,
+                "short",
+                original_word_count,
+                "english",
+            )
+            summary = _translate_with_mbart(en_short, source_lang="en", target_lang="tr")
+            summary = _repair_mixed_text_for_turkish(summary, source_hint="en")
+        elif length_mode == "short" and source_language == "tr" and target_language == "tr":
+            # Stabilize noisy Turkish OCR text via EN pivot for cleaner short outputs.
+            print("[SUMMARY] Using safe short TR path: TR -> EN translate -> EN summarize -> TR translate")
+            en_text = _translate_with_mbart(text, source_lang="tr", target_lang="en")
+            en_short = _summarize_with_transformers(
+                en_text,
+                "short",
+                original_word_count,
+                "english",
+            )
+            summary = _translate_with_mbart(en_short, source_lang="en", target_lang="tr")
+            summary = _repair_mixed_text_for_turkish(summary, source_hint="en")
+        elif needs_multilingual:
             # Use mBART-50 for multilingual summarization
             print(f"[SUMMARY] Using mBART-50 multilingual model")
             summary = summarize_multilingual(
@@ -1423,7 +1684,8 @@ def summarize_with_embeddings(
                 source_lang=source_language,
                 target_lang=target_language,
                 length_mode=length_mode,
-                original_word_count=original_word_count
+                original_word_count=original_word_count,
+                fast_mode=fast_english_medium,
             )
         else:
             # Use BART for English-only (faster)
@@ -1443,6 +1705,7 @@ def summarize_with_embeddings(
                 summary = _clean_text(summary, strict_english_only=True)
         
         # Apply hard character limit as final fallback
+        summary = _enforce_target_language(summary, target_language=target_language, source_hint=source_language)
         final = _apply_hard_limit(summary, max_chars)
         final_words = len(final.split())
         final_chars = len(final)
