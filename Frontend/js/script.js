@@ -17,6 +17,9 @@ let currentSummaryId = null;
 let currentSummaryData = null;
 let isSummaryEditing = false;
 let summaryEditSnapshot = "";
+let draggedSummaryId = null;
+let draggedFromWorkspaceId = null;
+let isSummaryMoveInProgress = false;
 
 function getApiCandidates() {
     const host = window.location.hostname || "localhost";
@@ -283,6 +286,19 @@ async function deleteSummary(summaryId) {
     }
 }
 
+async function deleteAllSummaries() {
+    const response = await apiFetch(`/api/ozetler/all`, {
+        method: "DELETE",
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || "Özetler silinemedi.");
+    }
+
+    return response.json();
+}
+
 async function downloadSummaryPdf(summaryId) {
     const response = await apiFetch(`/api/ozetler/${summaryId}/pdf`);
 
@@ -328,8 +344,12 @@ function requireLogin() {
 async function ensureWorkspaceSelection(selectElement) {
     const workspaces = await loadWorkspaces();
     if (!workspaces.length) {
-        const created = await createWorkspace("Genel Çalışma");
-        workspaces.push(created);
+        setActiveWorkspaceId(null);
+        if (selectElement) {
+            selectElement.innerHTML = "";
+            selectElement.value = "";
+        }
+        return { workspaces: [], currentId: null };
     }
 
     const savedId = getActiveWorkspaceId();
@@ -361,17 +381,16 @@ async function renderWorkspaceSidebar() {
 
     try {
         const workspaces = await loadWorkspaces();
-        if (!workspaces.length) {
-            const created = await createWorkspace("Genel Çalışma");
-            workspaces.push(created);
-        }
-
         const savedId = getActiveWorkspaceId();
-        const activeWorkspaceId = savedId && workspaces.some((item) => item.id === savedId) ? savedId : workspaces[0].id;
+        const activeWorkspaceId = workspaces.length
+            ? ((savedId && workspaces.some((item) => item.id === savedId)) ? savedId : workspaces[0].id)
+            : null;
         setActiveWorkspaceId(activeWorkspaceId);
 
-        if (!expandedWorkspaceIds.size) {
+        if (activeWorkspaceId && !expandedWorkspaceIds.size) {
             expandedWorkspaceIds.add(activeWorkspaceId);
+        } else if (!activeWorkspaceId) {
+            expandedWorkspaceIds.clear();
         }
 
         const workspaceSummaries = new Map(
@@ -381,6 +400,9 @@ async function renderWorkspaceSidebar() {
                     return [workspace.id, summaries];
                 })
             )
+        );
+        const summaryLookup = new Map(
+            Array.from(workspaceSummaries.values()).flat().map((item) => [item.id, item])
         );
 
         const newWorkspaceItem = `
@@ -399,7 +421,7 @@ async function renderWorkspaceSidebar() {
             const summaries = workspaceSummaries.get(workspaceId) || [];
 
             return `
-                <li class="workspace-parent ${isActive ? 'active' : ''} ${workspace.is_pinned ? 'is-pinned' : ''}" data-workspace-id="${workspaceId}">
+                <li class="workspace-parent workspace-drop-target ${isActive ? 'active' : ''} ${workspace.is_pinned ? 'is-pinned' : ''}" data-workspace-id="${workspaceId}">
                     <a href="#" class="workspace-row-link" data-action="toggle-workspace" data-workspace-id="${workspaceId}">
                         <i class="fas fa-chevron-right workspace-expand-icon ${isExpanded ? 'expanded' : ''}"></i>
                         <i class="fas ${isExpanded ? 'fa-folder-open' : 'fa-folder'}"></i>
@@ -415,11 +437,11 @@ async function renderWorkspaceSidebar() {
                         <li class="workspace-create-summary-item">
                             <a class="history-item-link" href="#" data-action="create-summary-in-workspace" data-workspace-id="${workspaceId}">
                                 <i class="fas fa-plus"></i>
-                                <span class="history-item-text">Yeni Damıtma</span>
+                                <span class="history-item-text">Yeni Özet</span>
                             </a>
                         </li>
                         ${summaries.length ? summaries.map((item) => `
-                            <li class="${item.id === currentSummaryId ? 'active' : ''}" data-summary-id="${item.id}" data-workspace-id="${workspaceId}">
+                            <li class="workspace-summary-item ${item.id === currentSummaryId ? 'active' : ''}" data-summary-id="${item.id}" data-workspace-id="${workspaceId}" draggable="true">
                                 <a class="history-item-link" href="summary.html?id=${item.id}">
                                     <i class="fas ${escapeHtml(item.icon_name || 'fa-file-lines')}"></i>
                                     <span class="history-item-text">${escapeHtml(item.baslik || 'Başlıksız Özet')}</span>
@@ -558,21 +580,20 @@ async function renderWorkspaceSidebar() {
                 }
 
                 const confirmed = await appConfirm(
-                    "Bu çalışmayı silmek istediğinizden emin misiniz? İçindeki özetler başka bir çalışmaya taşınacaktır.",
+                    "Bu çalışmayı silmek istediğinizden emin misiniz? İçindeki tüm özetler kalıcı olarak silinecektir.",
                     "Çalışmayı Sil"
                 );
                 if (!confirmed) return;
 
                 try {
                     const result = await deleteWorkspace(workspaceId);
-                    const fallbackId = Number(result?.fallback_calisma_id || 0);
-                    if (fallbackId) {
-                        setActiveWorkspaceId(fallbackId);
-                        expandedWorkspaceIds.add(fallbackId);
+                    if (getActiveWorkspaceId() === workspaceId) {
+                        setActiveWorkspaceId(null);
                     }
                     expandedWorkspaceIds.delete(workspaceId);
                     await renderWorkspaceSidebar();
-                    showInAppToast("Çalışma silindi.", "success");
+                    const deletedCount = Number(result?.deleted_summary_count || 0);
+                    showInAppToast(`Çalışma silindi. ${deletedCount} özet silindi.`, "success");
                 } catch (error) {
                     await appAlert(error.message || "Çalışma silinemedi.", "Hata");
                 }
@@ -585,7 +606,7 @@ async function renderWorkspaceSidebar() {
                 event.stopPropagation();
 
                 const summaryId = Number(button.getAttribute("data-summary-id"));
-                const summary = summaries.find((item) => item.id === summaryId);
+                const summary = summaryLookup.get(summaryId);
                 if (!summary) return;
 
                 const action = await appSelectOption(
@@ -665,6 +686,94 @@ async function renderWorkspaceSidebar() {
                 }
             });
         });
+
+        const currentPage = window.location.pathname.split("/").pop() || "index.html";
+        if (currentPage === "summary.html") {
+            const clearWorkspaceDropHighlight = () => {
+                list.querySelectorAll(".workspace-parent--drop-target").forEach((item) => {
+                    item.classList.remove("workspace-parent--drop-target");
+                });
+            };
+
+            list.querySelectorAll('.workspace-summary-item[data-summary-id]').forEach((summaryItem) => {
+                summaryItem.addEventListener("dragstart", (event) => {
+                    const summaryId = Number(summaryItem.getAttribute("data-summary-id"));
+                    const sourceWorkspaceId = Number(summaryItem.getAttribute("data-workspace-id"));
+                    if (!summaryId || !sourceWorkspaceId) return;
+
+                    draggedSummaryId = summaryId;
+                    draggedFromWorkspaceId = sourceWorkspaceId;
+                    summaryItem.classList.add("workspace-summary-item--dragging");
+
+                    if (event.dataTransfer) {
+                        event.dataTransfer.effectAllowed = "move";
+                        event.dataTransfer.setData("text/plain", String(summaryId));
+                    }
+                });
+
+                summaryItem.addEventListener("dragend", () => {
+                    summaryItem.classList.remove("workspace-summary-item--dragging");
+                    clearWorkspaceDropHighlight();
+                    draggedSummaryId = null;
+                    draggedFromWorkspaceId = null;
+                });
+            });
+
+            list.querySelectorAll('.workspace-parent[data-workspace-id]').forEach((workspaceItem) => {
+                workspaceItem.addEventListener("dragover", (event) => {
+                    const targetWorkspaceId = Number(workspaceItem.getAttribute("data-workspace-id"));
+                    const summaryId = draggedSummaryId || Number(event.dataTransfer?.getData("text/plain") || "0");
+                    const sourceWorkspaceId = draggedFromWorkspaceId;
+
+                    if (!summaryId || !targetWorkspaceId || isSummaryMoveInProgress) return;
+                    if (sourceWorkspaceId && sourceWorkspaceId === targetWorkspaceId) return;
+
+                    event.preventDefault();
+                    if (event.dataTransfer) {
+                        event.dataTransfer.dropEffect = "move";
+                    }
+
+                    clearWorkspaceDropHighlight();
+                    workspaceItem.classList.add("workspace-parent--drop-target");
+                });
+
+                workspaceItem.addEventListener("dragleave", (event) => {
+                    const nextTarget = event.relatedTarget;
+                    if (nextTarget && workspaceItem.contains(nextTarget)) return;
+                    workspaceItem.classList.remove("workspace-parent--drop-target");
+                });
+
+                workspaceItem.addEventListener("drop", async (event) => {
+                    event.preventDefault();
+                    clearWorkspaceDropHighlight();
+
+                    if (isSummaryMoveInProgress) return;
+
+                    const targetWorkspaceId = Number(workspaceItem.getAttribute("data-workspace-id"));
+                    const summaryId = draggedSummaryId || Number(event.dataTransfer?.getData("text/plain") || "0");
+                    const sourceWorkspaceId = draggedFromWorkspaceId;
+
+                    if (!summaryId || !targetWorkspaceId) return;
+                    if (sourceWorkspaceId && sourceWorkspaceId === targetWorkspaceId) return;
+
+                    isSummaryMoveInProgress = true;
+                    try {
+                        await moveSummaryToWorkspace(summaryId, targetWorkspaceId);
+                        if (currentSummaryData?.id === summaryId) {
+                            currentSummaryData.calisma_id = targetWorkspaceId;
+                        }
+                        await renderWorkspaceSidebar();
+                        showInAppToast("Özet başka çalışmaya taşındı.", "success");
+                    } catch (error) {
+                        await appAlert(error.message || "Özet taşınamadı.", "Hata");
+                    } finally {
+                        isSummaryMoveInProgress = false;
+                        draggedSummaryId = null;
+                        draggedFromWorkspaceId = null;
+                    }
+                });
+            });
+        }
 
 
     } catch (error) {
@@ -865,10 +974,19 @@ function applySavedPreferences() {
 }
 
 function applyFontSize(size) {
-    document.body.classList.remove("font-small", "font-medium", "font-large");
-    if (size && size !== "medium") {
-        document.body.classList.add(`font-${size}`);
-    }
+    const normalized = ["small", "medium", "large"].includes(size) ? size : "medium";
+
+    document.body.classList.remove(
+        "font-small",
+        "font-medium",
+        "font-large",
+        "font-size-small",
+        "font-size-medium",
+        "font-size-large"
+    );
+
+    document.body.classList.add(`font-${normalized}`);
+    document.body.classList.add(`font-size-${normalized}`);
 }
 
 function setFontSize(size, save = true) {
@@ -1062,10 +1180,17 @@ function initSettingsModal() {
         btnDelHist.onclick = async () => {
             const confirmed = await appConfirm("Tüm özet geçmişiniz silinecek. Emin misiniz?", "Geçmişi Sil");
             if(confirmed) {
-                localStorage.removeItem("history"); 
-                const list = document.getElementById("summaryList");
-                if(list) list.innerHTML = '<li class="placeholder">Geçmiş temizlendi.</li>';
-                showInAppToast("Geçmiş temizlendi.", "success");
+                try {
+                    const result = await deleteAllSummaries();
+                    currentSummaryId = null;
+                    currentSummaryData = null;
+                    const resultWrapper = document.getElementById("result-wrapper");
+                    if (resultWrapper) resultWrapper.style.display = "none";
+                    await renderWorkspaceSidebar();
+                    showInAppToast(result?.message || "Tüm özetler silindi.", "success");
+                } catch (error) {
+                    await appAlert(error.message || "Özetler silinemedi.", "Hata");
+                }
             }
         };
     }
@@ -1121,8 +1246,12 @@ function initSettingsPage() {
         historyBtn.onclick = async () => {
             const confirmed = await appConfirm("Tüm özet geçmişiniz silinecek. Emin misiniz?", "Geçmişi Sil");
             if (confirmed) {
-                localStorage.removeItem("history");
-                showInAppToast("Geçmiş temizlendi.", "success");
+                try {
+                    const result = await deleteAllSummaries();
+                    showInAppToast(result?.message || "Tüm özetler silindi.", "success");
+                } catch (error) {
+                    await appAlert(error.message || "Özetler silinemedi.", "Hata");
+                }
             }
         };
     }
@@ -1484,11 +1613,22 @@ function initHistoryPage() {
   async function renderHistory(selectedId = null) {
       const workspaces = await loadWorkspaces();
       if (!workspaces.length) {
-          const created = await createWorkspace("Genel Çalışma");
-          workspaces.push(created);
+          setActiveWorkspaceId(null);
+          if (workspaceList) {
+              workspaceList.innerHTML = '<p class="workspace-inline-empty">Henüz çalışma yok. Soldaki formdan yeni çalışma oluşturabilirsiniz.</p>';
+          }
+          if (workspaceDetailTitle) workspaceDetailTitle.textContent = "Çalışma bulunamadı";
+          if (workspaceDetailMeta) workspaceDetailMeta.textContent = "Özetlerinizi gruplamak için yeni bir çalışma oluşturun.";
+          if (workspaceSummaryList) {
+              workspaceSummaryList.innerHTML = '<p class="empty-state">Bu alanda göstermek için önce çalışma oluşturun.</p>';
+          }
+          return;
       }
 
-      const activeId = selectedId || getActiveWorkspaceId() || workspaces[0].id;
+      const preferredId = selectedId || getActiveWorkspaceId();
+      const activeId = preferredId && workspaces.some((workspace) => workspace.id === preferredId)
+          ? preferredId
+          : workspaces[0].id;
       setActiveWorkspaceId(activeId);
 
       const currentWorkspace = workspaces.find((workspace) => workspace.id === activeId) || workspaces[0];

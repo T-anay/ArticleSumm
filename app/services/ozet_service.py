@@ -49,8 +49,6 @@ def create_calisma(db: Session, owner_id: int, baslik: str) -> Calisma:
 
 
 def list_calismalar(db: Session, owner_id: int):
-    get_or_create_default_calisma(db, owner_id)
-
     latest_summary_times = dict(
         db.query(Ozet.calisma_id, func.max(Ozet.created_at))
         .filter(Ozet.sahip_id == owner_id)
@@ -98,26 +96,17 @@ def update_calisma(db: Session, calisma_id: int, owner_id: int, baslik: str | No
 def delete_calisma(db: Session, calisma_id: int, owner_id: int):
     calisma = get_calisma(db, calisma_id, owner_id)
     if not calisma:
-        return None
+        return False, 0
 
-    fallback = (
-        db.query(Calisma)
-        .filter(Calisma.sahip_id == owner_id, Calisma.id != calisma_id)
-        .order_by(Calisma.created_at.desc())
-        .first()
+    deleted_count = (
+        db.query(Ozet)
+        .filter(Ozet.sahip_id == owner_id, Ozet.calisma_id == calisma_id)
+        .delete(synchronize_session=False)
     )
 
-    if fallback is None:
-        fallback_title = "Yeni Çalışma" if calisma.baslik == DEFAULT_CALISMA_TITLE else DEFAULT_CALISMA_TITLE
-        fallback = Calisma(baslik=fallback_title, sahip_id=owner_id)
-        db.add(fallback)
-        db.commit()
-        db.refresh(fallback)
-
-    db.query(Ozet).filter(Ozet.sahip_id == owner_id, Ozet.calisma_id == calisma_id).update({Ozet.calisma_id: fallback.id})
     db.delete(calisma)
     db.commit()
-    return fallback
+    return True, deleted_count
 
 
 def create_ozet(db: Session, baslik: str, orijinal_metin: str, owner_id: int, max_chars: int = 1500, length_mode: str = "medium", target_language: str = "en", source_language: str = "auto", calisma_id: int | None = None):
@@ -210,6 +199,14 @@ def update_ozet(db: Session, ozet_id: int, owner_id: int, data: dict):
     ozet = db.query(Ozet).filter(Ozet.id == ozet_id, Ozet.sahip_id == owner_id).first()
     if not ozet:
         return None
+
+    if "calisma_id" in data:
+        target_calisma_id = data.get("calisma_id")
+        if target_calisma_id is not None:
+            target_calisma = get_calisma(db, target_calisma_id, owner_id)
+            if not target_calisma:
+                raise ValueError("Çalışma bulunamadı")
+
     for key, value in data.items():
         setattr(ozet, key, value)
     db.commit()

@@ -47,8 +47,24 @@ body {
   font-family: var(--font-ui); 
   background-color: var(--bg-light);
   color: var(--text-light);
+  --content-font-size: 1rem;
   transition: all 0.3s ease;
   line-height: 1.5;
+}
+
+body.font-small,
+body.font-size-small {
+  --content-font-size: 0.92rem;
+}
+
+body.font-medium,
+body.font-size-medium {
+  --content-font-size: 1rem;
+}
+
+body.font-large,
+body.font-size-large {
+  --content-font-size: 1.12rem;
 }
 
 body.dark-mode {
@@ -63,8 +79,8 @@ body.dark-mode {
   padding: 30px; 
   box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
 }
+
 .dark-mode .card {
-  background-color: var(--card-bg-dark);
   border-color: var(--border-dark);
 }
 
@@ -81,6 +97,7 @@ body.dark-mode {
   perspective: 1000px;
   padding: 2rem 0;
 }
+
 .dark-mode.auth-body {
   background-color: var(--bg-dark);
   color: var(--text-dark);
@@ -379,6 +396,23 @@ body.dark-mode {
   overflow: hidden;
 }
 
+.workspace-summary-item[draggable="true"] {
+  cursor: grab;
+}
+
+.workspace-summary-item--dragging {
+  opacity: 0.45;
+}
+
+.workspace-parent--drop-target {
+  background-color: rgba(0, 92, 171, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(0, 92, 171, 0.35);
+}
+
+.workspace-parent--drop-target > .workspace-row-link {
+  color: var(--primary-color);
+}
+
 .workspace-row-link {
   display: flex;
   align-items: center;
@@ -629,6 +663,11 @@ body.dark-mode .workspace-pinned-badge {
 }
 .dark-mode .workspace-summary-empty {
   color: var(--text-dark-muted);
+}
+
+.dark-mode .workspace-parent--drop-target {
+  background-color: rgba(0, 92, 171, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(88, 176, 255, 0.4);
 }
 .sidebar-menu li a i {
   width: 20px;
@@ -1305,25 +1344,26 @@ body.dark-mode .action-btn.pin-btn:hover {
   white-space: pre-wrap;
   max-width: 65ch; 
   margin: 0 auto;  
-  font-size: 1.05rem;
+  font-size: calc(var(--content-font-size) * 1.05);
 }
 
 body.font-small #resultArea #summaryOutput {
-  font-size: 0.95rem;
+  font-size: calc(var(--content-font-size) * 1.05);
 }
 
 body.font-large #resultArea #summaryOutput {
-  font-size: 1.18rem;
+  font-size: calc(var(--content-font-size) * 1.05);
 }
 
 body.font-medium #resultArea #summaryOutput {
-  font-size: 1.05rem;
+  font-size: calc(var(--content-font-size) * 1.05);
 }
 
 /* Uzun okuma modu için Serif Font */
 body.font-mode-serif #summaryOutput {
   font-family: var(--font-reading);
 }
+
 /* Arayüz/Kısa okuma için Sans-Serif */
 body.font-mode-sans #summaryOutput {
   font-family: var(--font-ui);
@@ -1334,14 +1374,11 @@ body.font-mode-sans #summaryOutput {
   background-color: var(--primary-color);
   color: white;
   padding: 4px 10px;
-  border-radius: 15px;
   margin-right: 8px;
   margin-bottom: 8px;
   font-size: 0.85em;
-  display: inline-block;
 }
 
-.loading-indicator { margin-top: 15px; color: var(--text-light-muted); }
 #form-error-message {
   margin-top: 15px;
   padding: 10px 15px;
@@ -1356,6 +1393,16 @@ body.font-mode-sans #summaryOutput {
   color: #ff6b6b;
   background-color: rgba(255, 107, 107, 0.1);
   border-color: rgba(255, 107, 107, 0.2);
+}
+
+.history-lead,
+.workspace-inline-summary-excerpt,
+.workspace-summary-empty,
+.workspace-inline-empty,
+.empty-state,
+.workspace-summary-card p,
+.modal-message {
+  font-size: var(--content-font-size);
 }
 
 .dark-mode .drop-zone {
@@ -1857,10 +1904,15 @@ body.font-mode-sans #summaryOutput {
    10. FONT BOYUTU CLASS'LARI
    ============================================== */
 body.font-size-small #summaryOutput {
-  font-size: 0.85rem;
+  font-size: calc(var(--content-font-size) * 1.05);
 }
+
+body.font-size-medium #summaryOutput {
+  font-size: calc(var(--content-font-size) * 1.05);
+}
+
 body.font-size-large #summaryOutput {
-  font-size: 1.15rem;
+  font-size: calc(var(--content-font-size) * 1.05);
   line-height: 1.8;
 }
 

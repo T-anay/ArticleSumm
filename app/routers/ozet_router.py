@@ -172,13 +172,12 @@ def rename_calisma(calisma_id: int, payload: CalismaUpdate, db: Session = Depend
 
 @router.delete("/calismalar/{calisma_id}", response_model=dict)
 def remove_calisma(calisma_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    fallback = delete_calisma(db, calisma_id, current_user.id)
-    if not fallback:
+    deleted, deleted_summary_count = delete_calisma(db, calisma_id, current_user.id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Çalışma bulunamadı")
     return {
         "message": "Çalışma silindi.",
-        "fallback_calisma_id": fallback.id,
-        "fallback_calisma_baslik": fallback.baslik,
+        "deleted_summary_count": deleted_summary_count,
     }
 
 
@@ -308,7 +307,10 @@ def get_summary(ozet_id: int, db: Session = Depends(get_db), current_user = Depe
 
 @router.put("/{ozet_id}", response_model=OzetOut)
 def update_summary_details(ozet_id: int, payload: OzetUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    updated_ozet = update_ozet(db, ozet_id=ozet_id, owner_id=current_user.id, data=payload.dict(exclude_unset=True))
+    try:
+        updated_ozet = update_ozet(db, ozet_id=ozet_id, owner_id=current_user.id, data=payload.dict(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     if not updated_ozet:
         raise HTTPException(status_code=404, detail="Özet bulunamadı")
     return updated_ozet

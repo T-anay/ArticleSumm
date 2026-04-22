@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bilgi Damıtma | ArticleSumm</title>
+  <title>Bilgi Özetleniyor | ArticleSumm</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,9 +71,9 @@
           <label for="summaryLength" class="mode-label">Özet Uzunluğu:</label>
           <div class="select-wrapper">
             <select id="summaryLength" name="summaryLength" class="custom-select">
-              <option value="short">⚡ Kısa (30-60 kelime, %5)</option>
-              <option value="medium" selected>📚 Orta (150-400 kelime, %15)</option>
-              <option value="long">📄 Uzun (500-1500 kelime, %25)</option>
+              <option value="short">Kısa (30-60 kelime, %5)</option>
+              <option value="medium" selected>Orta (150-400 kelime, %15)</option>
+              <option value="long">Uzun (500-1500 kelime, %25)</option>
             </select>
             <i class="fas fa-chevron-down select-arrow"></i>
           </div>
@@ -83,18 +83,15 @@
           <label for="targetLanguage" class="mode-label">Hedef Dil:</label>
           <div class="select-wrapper">
             <select id="targetLanguage" name="targetLanguage" class="custom-select">
-              <option value="english" selected>🇬🇧 English (AI Model)</option>
-              <option value="turkish" disabled>🇹🇷 Türkçe (Yakında)</option>
+              <option value="english" selected>English</option>
+              <option value="turkish">Türkçe</option>
             </select>
             <i class="fas fa-chevron-down select-arrow"></i>
           </div>
-          <p class="hint-text" style="font-size: 0.85rem; margin-top: 0.5rem; opacity: 0.8;">
-            ⚠️ BART modeli İngilizce eğitilmiştir. Türkçe destek için çeviri özelliği yakında eklenecek.
-          </p>
         </div>
 
         <div class="actions">
-          <button id="summarizeBtn">Analiz Et ve Damıt</button>
+          <button id="summarizeBtn">Analiz Et ve Özetle</button>
         </div>
         
         <div id="loading" class="loading-indicator" style="display: none;">
