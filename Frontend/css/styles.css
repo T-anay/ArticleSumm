@@ -89,13 +89,15 @@ body.dark-mode {
    ============================================== */
 .auth-body {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-light);
   color: var(--text-light);
   perspective: 1000px;
-  padding: 2rem 0;
+  padding: clamp(64px, 20vh, 180px) 0 24px;
+  box-sizing: border-box;
 }
 
 .dark-mode.auth-body {
@@ -1457,6 +1459,9 @@ body.font-mode-sans #summaryOutput {
 }
 
 @media (max-width: 768px) {
+  .auth-body {
+    padding: clamp(24px, 10vh, 72px) 0 16px;
+  }
   .auth-flipper-container {
     width: 90%;
   }
