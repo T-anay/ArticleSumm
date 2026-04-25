@@ -17,9 +17,34 @@ let currentSummaryId = null;
 let currentSummaryData = null;
 let isSummaryEditing = false;
 let summaryEditSnapshot = "";
+let summaryTagsSnapshot = "";
 let draggedSummaryId = null;
 let draggedFromWorkspaceId = null;
 let isSummaryMoveInProgress = false;
+
+function parseTagsCsv(value) {
+    return String(value || "")
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+}
+
+function renderSummaryTags(tagsEl, tags) {
+    if (!tagsEl) return;
+    tagsEl.innerHTML = tags.map((tag) => `<span>${tag}</span>`).join("");
+}
+
+function renderSummaryTagsEditor(tagsEl, tags) {
+    if (!tagsEl) return;
+    const safeTagsValue = tags.join(", ").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    tagsEl.innerHTML = `
+        <div class="summary-tag-editor">
+            <label for="summaryTagsInput">Etiketler</label>
+            <input id="summaryTagsInput" class="modal-input" type="text" placeholder="ornek: bilim, ai, hukuk" value="${safeTagsValue}">
+            <p class="summary-tags-hint">Etiketleri virgul ile ayirin.</p>
+        </div>
+    `;
+}
 
 function getApiCandidates() {
     const host = window.location.hostname || "localhost";
@@ -182,6 +207,7 @@ function renderSummaryDetails(data) {
     currentSummaryData = data || null;
     isSummaryEditing = false;
     summaryEditSnapshot = "";
+    summaryTagsSnapshot = data?.etiketler || "";
 
     const resultWrapper = document.getElementById("result-wrapper");
     const resultArea = document.getElementById("resultArea");
@@ -205,11 +231,7 @@ function renderSummaryDetails(data) {
     }
     if (title) title.textContent = data?.baslik || "Sonuç";
     if (tagsEl) {
-        const tags = (data?.etiketler || "")
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean);
-        tagsEl.innerHTML = tags.map((tag) => `<span>${tag}</span>`).join("");
+        renderSummaryTags(tagsEl, parseTagsCsv(data?.etiketler || ""));
     }
     if (badge) badge.style.display = "none";
     if (editBtn) editBtn.style.display = currentSummaryId ? "inline-flex" : "none";
@@ -243,6 +265,7 @@ function setSummaryEditingMode(editing) {
     const saveBtn = document.getElementById("saveSummaryBtn");
     const cancelBtn = document.getElementById("cancelEditSummaryBtn");
     const editorToolbar = document.getElementById("summaryEditorToolbar");
+    const tagsEl = document.getElementById("summaryTags");
 
     if (!output) return;
 
@@ -251,7 +274,11 @@ function setSummaryEditingMode(editing) {
 
     if (editing) {
         summaryEditSnapshot = output.innerHTML;
+        summaryTagsSnapshot = currentSummaryData?.etiketler || "";
+        renderSummaryTagsEditor(tagsEl, parseTagsCsv(summaryTagsSnapshot));
         output.focus();
+    } else {
+        renderSummaryTags(tagsEl, parseTagsCsv(currentSummaryData?.etiketler || ""));
     }
 
     if (editBtn) editBtn.style.display = editing ? "none" : (currentSummaryId ? "inline-flex" : "none");
@@ -1007,8 +1034,28 @@ function setTheme(mode, save = true) {
   if (mode === "dark") document.body.classList.add("dark-mode");
   if (mode === "sepia") document.body.classList.add("sepia-mode");
 
+    applySummaryCardThemeOverrides(mode);
+
   if (save) localStorage.setItem("theme", mode);
   updateActiveThemeButtons(mode);
+}
+
+function applySummaryCardThemeOverrides(mode) {
+        const isSummaryPage = (window.location.pathname.split("/").pop() || "index.html") === "summary.html";
+        if (!isSummaryPage) return;
+
+        const cards = [document.getElementById("inputArea"), document.getElementById("resultArea")].filter(Boolean);
+        cards.forEach((card) => {
+                if (mode === "dark") {
+                        card.style.setProperty("background-color", "var(--card-bg-dark)", "important");
+                        card.style.setProperty("border-color", "var(--border-dark)", "important");
+                        card.style.setProperty("color", "var(--text-dark)", "important");
+                } else {
+                        card.style.removeProperty("background-color");
+                        card.style.removeProperty("border-color");
+                        card.style.removeProperty("color");
+                }
+        });
 }
 
 function updateActiveThemeButtons(mode) {
@@ -1405,6 +1452,9 @@ function initAuthPage() {
 // ==============================================
 function initSummaryPage() {
   if (!requireLogin()) return;
+
+    const currentTheme = localStorage.getItem("theme") || "light";
+    applySummaryCardThemeOverrides(currentTheme);
   
   const dropZone = document.getElementById('drop-zone');
   const pdfInput = document.getElementById('pdfInput');
@@ -1429,15 +1479,18 @@ function initSummaryPage() {
       saveSummaryBtn.addEventListener("click", async () => {
           if (!currentSummaryId) return;
           const output = document.getElementById("summaryOutput");
+          const tagsInput = document.getElementById("summaryTagsInput");
           if (!output) return;
 
           try {
+              const normalizedTags = parseTagsCsv(tagsInput?.value || currentSummaryData?.etiketler || "").join(", ");
               const updated = await updateSummary(currentSummaryId, {
                   ozet_metin: output.innerHTML,
+                  etiketler: normalizedTags,
               });
               renderSummaryDetails(updated);
               await renderWorkspaceSidebar();
-              showInAppToast("Özet metni güncellendi.", "success");
+              showInAppToast("Özet ve etiketler güncellendi.", "success");
           } catch (error) {
               await appAlert(error.message || "Özet metni güncellenemedi.", "Hata");
           }

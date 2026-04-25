@@ -70,6 +70,13 @@ body.font-size-large {
 body.dark-mode {
   background-color: var(--bg-dark);
   color: var(--text-dark);
+
+  /* Ensure any remaining light-token usages render correctly in dark mode */
+  --bg-light: var(--bg-dark);
+  --card-bg-light: var(--card-bg-dark);
+  --text-light: var(--text-dark);
+  --text-light-muted: var(--text-dark-muted);
+  --border-light: var(--border-dark);
 }
 
 .card {
@@ -81,6 +88,8 @@ body.dark-mode {
 }
 
 .dark-mode .card {
+  background-color: var(--card-bg-dark);
+  color: var(--text-dark);
   border-color: var(--border-dark);
 }
 
@@ -1340,6 +1349,13 @@ body.dark-mode .action-btn.pin-btn:hover {
   margin-top: 20px;
 }
 
+body.dark-mode #inputArea.card,
+body.dark-mode #resultArea.card {
+  background-color: var(--card-bg-dark) !important;
+  border-color: var(--border-dark);
+  color: var(--text-dark);
+}
+
 /* --- OKUNABİLİRLİK GÜNCELLEMESİ --- */
 #resultArea #summaryOutput { 
   line-height: 1.6; 
@@ -1347,6 +1363,11 @@ body.dark-mode .action-btn.pin-btn:hover {
   max-width: 65ch; 
   margin: 0 auto;  
   font-size: calc(var(--content-font-size) * 1.05);
+}
+
+#resultArea #summaryOutput,
+#resultArea #summaryOutput * {
+  color: inherit;
 }
 
 body.font-small #resultArea #summaryOutput {
@@ -1379,6 +1400,33 @@ body.font-mode-sans #summaryOutput {
   margin-right: 8px;
   margin-bottom: 8px;
   font-size: 0.85em;
+}
+
+.summary-tag-editor {
+  text-align: left;
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+.summary-tag-editor label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+#summaryTagsInput {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.summary-tags-hint {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-light-muted);
+}
+
+body.dark-mode .summary-tags-hint {
+  color: var(--text-dark-muted);
 }
 
 #form-error-message {
