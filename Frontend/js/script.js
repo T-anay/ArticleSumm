@@ -1391,7 +1391,7 @@ function initSummaryPage() {
               formData.append("length_option", mode);
               
               const langEl = document.getElementById("targetLanguage");
-              const targetLang = langEl ? langEl.value : "turkish";
+              const targetLang = langEl ? langEl.value : "en";
               formData.append("target_language", targetLang);
 
               const workspaceId = getActiveWorkspaceId();

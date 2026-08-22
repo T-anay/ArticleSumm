@@ -25,3 +25,12 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+
+# Test, Çıktı ve Veritabanı Dosyaları
+*.pdf
+*.json
+*.db
+call_summarize.py
+create_test_user.py
+desktop.ini

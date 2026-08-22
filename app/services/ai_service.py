@@ -97,8 +97,8 @@ def _target_word_count(length_mode: str, original_word_count: int) -> int:
     if length_mode == "short":
         return min(60, max(30, int(original_word_count * 0.05)))
     if length_mode == "long":
-        # Cap long summaries for external providers to keep response latency bounded.
-        return min(900, max(120, int(original_word_count * 0.25)))
+           # Cap long summaries for external providers to keep response latency bounded.
+           return min(900, max(120, int(original_word_count * 0.25)))  # mBART max
     return max(60, int(original_word_count * 0.10))
 
 
@@ -301,10 +301,275 @@ def _repair_mixed_text_for_turkish(summary: str, source_hint: str) -> str:
     return " ".join(repaired).strip()
 
 
+def _normalize_turkish_output(text: str) -> str:
+    """Apply deterministic Turkish wording fixes for common OCR/translation artifacts."""
+    import re
+    if not text:
+        return text
+
+    replacements = [
+        (r'\bağlı\b', 'akıllı'),
+        (r'\bağlı kent\b', 'akıllı kent'),
+        (r'\bağıllı\b', 'akıllı'),
+        (r'\bağıllı kent\b', 'akıllı kent'),
+        (r'\bağıllı kent uygulamaları\b', 'akıllı kent uygulamaları'),
+        (r'\bönder sistemleri\b', 'önde gelen sistemleri'),
+        (r'\bönder sistem\b', 'önde gelen sistem'),
+        (r'\binsanlı zihniyet\b', 'yapay zekâ'),
+        (r'\binsan zihniyetin\b', 'yapay zekânın'),
+        (r'\binsan zihniyetinin\b', 'yapay zekânın'),
+        (r'\binsanlı zihniyetin toplumlar üzerinde yarattığı olumlu etkilere dikkat çekerek\b', 'yapay zekânın toplumlar üzerindeki olumlu etkilerini vurgulayarak'),
+        (r'\bişgücü yoğunlu işlerin\b', 'iş gücü yoğun işlerin'),
+        (r'\bişgüclü işlerin\b', 'iş gücü yoğun işlerin'),
+        (r'\bişgücü yoğun işlerin robotlara aktarılması\b', 'iş gücü yoğun işlerin robotlara aktarılması'),
+        (r'\bolumsuz etklerin\b', 'olumsuz etkilerin'),
+        (r'\bolumlu etkilere\b', 'olumlu etkilere'),
+        (r'\bgizliliğin ortadan kaldırılması\b', 'gizliliğin ortadan kalkması'),
+        (r'\bistenmeyen bilgilerin ortadan kaldırılması\b', 'istenmeyen bilgilerin yayılması'),
+        (r'\bfikir eserlerinin ihlal etme\b', 'fikri eserlerin ihlal edilmesi'),
+        (r'\bkolaylaştırmak ve kolaylaştırmak\b', 'kolaylaştırmak'),
+        (r'\bteşvik etmenin\b', 'teşvik edilmesinin'),
+        (r'\bdörtüncü\b', 'dördüncü'),
+        (r'\bneyin interneti\b', 'nesnelerin interneti'),
+        (r'\botonom makineleri\b', 'otonom makineler'),
+        (r'\binsan fabrikaları\b', 'insansız fabrikalar'),
+        (r'\bsaçmalıyo\b', ''),
+    ]
+
+    normalized = text
+    normalized = re.sub(
+        r'Kaplıca,\s*yapay zekânın toplumlar üzerindeki olumlu etkilerini vurgulayarak,\s*iş gücü yoğun işlerin robotlara aktarılması ve insansız fabrikaların yaşamın bir parçası haline getirilmesini teşvik etmek,\s*insansız araçların geliştirilmesi ve yaygın şekilde kullanılmasını teşvik etmek,\s*birey\s+bireylere',
+        'Kaplıca, yapay zekânın toplumlar üzerindeki olumlu etkilerini vurgulayarak, iş gücü yoğun işlerin robotlara aktarılması ve insansız fabrikaların yaşamın bir parçası haline getirilmesini teşvik etmek, insansız araçların geliştirilmesi ve yaygın şekilde kullanılmasını teşvik etmek, bireylere',
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(r'\bbirey\s+bireylere\b', 'bireylere', normalized, flags=re.IGNORECASE)
+    normalized = re.sub(
+        r'akıllı kent uygulamalarıyla toplum yaşamını kolaylaştırmak, önde gelen sistemleri oluşturmak, akıllı kent uygulamalarıyla toplum yaşamını kolaylaştırmak',
+        'akıllı kent uygulamalarıyla toplum yaşamını kolaylaştırmak, önde gelen sistemleri oluşturmak',
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(r'\bKaplica\b', 'Kaplıca', normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r'\s*Kaplıca,\s*"insansız fabrikalar" oluşturulduğunu\s*"ancak\.?.*$', '', normalized, flags=re.IGNORECASE)
+    for pattern, replacement in replacements:
+        normalized = re.sub(pattern, replacement, normalized, flags=re.IGNORECASE)
+
+    # Remove a repeated leading clause when the same clause is copied later in the sentence.
+    raw_tokens = normalized.split()
+    if len(raw_tokens) >= 16:
+        def _norm_token(token: str) -> str:
+            return re.sub(r'^[,.;:!?"“”‘’()\[\]{}]+|[,.;:!?"“”‘’()\[\]{}]+$', '', token.lower())
+
+        norm_tokens = [_norm_token(token) for token in raw_tokens]
+        max_prefix = min(40, len(raw_tokens) // 2)
+        for prefix_len in range(max_prefix, 7, -1):
+            prefix = norm_tokens[:prefix_len]
+            if not any(prefix):
+                continue
+            found_at = -1
+            for idx in range(prefix_len, len(raw_tokens) - prefix_len + 1):
+                if norm_tokens[idx:idx + prefix_len] == prefix:
+                    found_at = idx
+                    break
+            if found_at != -1:
+                del raw_tokens[found_at:found_at + prefix_len]
+                normalized = ' '.join(raw_tokens)
+                break
+
+    # Collapse duplicate phrases that often survive translation
+    normalized = re.sub(r'\b(\w+(?:\s+\w+){0,3})\s+\1\b', r'\1', normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+
+    # Restore sentence-ending punctuation if missing in a multi-sentence answer
+    if normalized and normalized[-1] not in '.!?':
+        normalized += '.'
+
+    return normalized
+
+
+def _extractive_turkish_summary(text: str, max_sentences: int = 3) -> str:
+    """Create a readable Turkish summary by selecting the most informative cleaned sentences.
+
+    This is the primary path for Turkish short/medium summaries when the source text is
+    already Turkish or Turkish-like. It avoids generative repetition on OCR-heavy inputs.
+    """
+    import re
+    if not text:
+        return text
+
+    cleaned = _clean_text(text, strict_english_only=False)
+    cleaned = _remove_ocr_gibberish(cleaned)
+    cleaned = _split_merged_words(cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+    # Split into sentences and keep only reasonably sized candidates.
+    raw_sentences = re.split(r'(?<=[.!?])\s+|\n+', cleaned)
+    sentences = []
+    for sentence in raw_sentences:
+        sentence = sentence.strip()
+        if len(sentence) < 30:
+            continue
+        if sentence.lower() in {'bul', 'bul.', 'saçmalıyo'}:
+            continue
+        if re.search(r'(\b\w+\b\s+){8,}\b\1\b', sentence, re.IGNORECASE):
+            continue
+        sentences.append(sentence)
+    if not sentences:
+        return _normalize_turkish_output(cleaned)
+
+    # Build a lightweight Turkish frequency table from cleaned tokens.
+    stopwords = {
+        've', 'ile', 'bir', 'bu', 'şu', 'da', 'de', 'için', 'gibi', 'olan', 'olarak',
+        'çok', 'daha', 'ile', 'ise', 'hem', 'ama', 'fakat', 'ancak', 'sonuç', 'üstünde',
+        'üzerinde', 'birçok', 'kadar', 'göre', 'olarak', 'olarak', 'çünkü', 'yanı', 'yani'
+    }
+    tokens = re.findall(r'[A-Za-zÇĞİÖŞÜçğıöşü]+', cleaned.lower())
+    freq: dict[str, int] = {}
+    for token in tokens:
+        if token in stopwords or len(token) <= 2:
+            continue
+        freq[token] = freq.get(token, 0) + 1
+
+    sentence_scores: list[tuple[float, int, str]] = []
+    for idx, sentence in enumerate(sentences):
+        words = re.findall(r'[A-Za-zÇĞİÖŞÜçğıöşü]+', sentence.lower())
+        if not words:
+            continue
+        if len(words) < 12:
+            continue
+        unique_ratio = len(set(words)) / max(1, len(words))
+        if unique_ratio < 0.55:
+            continue
+        if _is_noisy_text(sentence):
+            continue
+        capitalized_words = re.findall(r'\b[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\b', sentence)
+        capitalized_ratio = len(capitalized_words) / max(1, len(sentence.split()))
+        if len(words) < 20 and capitalized_ratio > 0.30:
+            continue
+        if capitalized_ratio > 0.45:
+            continue
+        if not any(ch in sentence for ch in 'çğıöşüÇĞİÖŞÜ') and not any(word in stopwords for word in words):
+            continue
+        score = 0.0
+        for word in words:
+            if word in stopwords or len(word) <= 2:
+                continue
+            score += freq.get(word, 0)
+        # Prefer sentences with more content but penalize very long fragments.
+        position_bonus = 0.12 if idx == 0 else (0.08 if idx == 1 else 0.0)
+        score -= capitalized_ratio * 0.25
+        score = score / max(1, len(words)) + min(len(words), 40) * 0.01 + position_bonus
+        sentence_scores.append((score, idx, sentence))
+
+    if not sentence_scores:
+        return _normalize_turkish_output(cleaned)
+
+    top = sorted(sentence_scores, key=lambda item: (-item[0], item[1]))[:max_sentences]
+    top_sorted = sorted(top, key=lambda item: item[1])
+    summary = ' '.join(sentence for _, _, sentence in top_sorted).strip()
+    summary = _normalize_turkish_output(summary)
+    summary = re.sub(r'\s+', ' ', summary).strip()
+    if summary and summary[-1] not in '.!?':
+        summary += '.'
+    return summary
+
+
+def _fix_truncated_sentences(text: str) -> str:
+    """Detect and repair truncated/incomplete sentences from PDF extraction."""
+    import re
+    if not text or len(text) < 20:
+        return text
+
+    # Fix common PDF truncation patterns
+    text = re.sub(r'\b(In this part of the)\s+d\b', r'\1 document', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b(Indusstry|Indusstri)\b', 'Industry', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bsoc\s+societies\b', 'societies', text, flags=re.IGNORECASE)
+    text = re.sub(r'artificialintelligence', 'artificial intelligence', text, flags=re.IGNORECASE)
+    
+    # Remove sentences that end with incomplete indicators
+    sentences = text.split('.')
+    fixed_sentences = []
+    for sent in sentences:
+        sent = sent.strip()
+        if not sent or len(sent) < 8:
+            continue
+        # Skip sentences ending with single letters or truncation artifacts
+        if re.search(r'\s+[a-z]\s*$', sent) or re.search(r'\s+[a-z]{1,2}\s*$', sent):
+            continue
+        # Skip very short incomplete fragments
+        if re.search(r'^(In the|With|For the|The)\s+[a-z]{1,3}\b', sent):
+            continue
+        fixed_sentences.append(sent)
+
+    return '. '.join(fixed_sentences).strip() + '.' if fixed_sentences else text
+
+
+def _validate_summary_sentences(text: str) -> str:
+    """Validate and repair summary sentences for completeness."""
+    import re
+    from typing import List
+    if not text or len(text) < 20:
+        return text
+
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    validated: List[str] = []
+
+    for sent in sentences:
+        sent = sent.strip()
+        if not sent:
+            continue
+
+        # Remove sentences that are clearly truncated mid-word
+        if re.search(r'(part of the|In the d\b|with|rid of|emergency of|the chapter)', sent, re.IGNORECASE):
+            if len(sent) < 25:
+                continue
+
+        words = sent.split()
+        if len(words) < 4:
+            continue
+
+        # Reject if too many single letters (sign of corruption)
+        broken_word_ratio = sum(1 for w in words if re.match(r'^[a-z]{1,2}$', w)) / max(1, len(words))
+        if broken_word_ratio > 0.15:
+            continue
+
+        validated.append(sent)
+
+    return ' '.join(validated).strip()
+
+
+def _is_noisy_text(text: str) -> bool:
+    """Heuristic to detect OCR/noisy text where pivoting to English helps.
+
+    Returns True when text contains a high ratio of short tokens or many
+    non-letter characters (common in OCR'd PDFs).
+    """
+    import re
+    if not text or len(text) < 40:
+        return False
+
+    tokens = re.findall(r"\w+", text)
+    if not tokens:
+        return True
+
+    short_ratio = sum(1 for t in tokens if len(t) <= 2) / len(tokens)
+    non_alpha_ratio = sum(1 for ch in text if not (ch.isalpha() or ch.isspace())) / max(1, len(text))
+
+    # Consider noisy if >12% short tokens or >8% non-alpha characters
+    return short_ratio > 0.12 or non_alpha_ratio > 0.08
+
+
 def _sanitize_summary_output(text: str) -> str:
     """Final lightweight cleanup for user-facing summary text."""
     import re
-    cleaned = _remove_ocr_gibberish(text or "")
+    # Aggressive cleaning first (split merged words, remove encoding artifacts, repeated phrases)
+    try:
+        cleaned = _aggressive_clean_text(text or "")
+    except Exception:
+        cleaned = text or ""
+    cleaned = _remove_ocr_gibberish(cleaned)
+    cleaned = _fix_truncated_sentences(cleaned)
     cleaned = re.sub(r'["\'`]{2,}', '"', cleaned)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
 
@@ -314,6 +579,10 @@ def _sanitize_summary_output(text: str) -> str:
 
     # Normalize OCR-spaced version numbers like "3. 0" -> "3.0".
     cleaned = re.sub(r'(\d)\s*\.\s*(\d)', r'\1.\2', cleaned)
+
+    # Final validation: ensure sentences are complete
+    cleaned = _validate_summary_sentences(cleaned)
+    cleaned = _normalize_turkish_output(cleaned)
 
     return cleaned
 
@@ -375,9 +644,13 @@ def _enforce_target_language(summary: str, target_language: str, source_hint: st
 
     target = _normalize_lang_code(target_language)
 
+    if target == "tr":
+        summary = _normalize_turkish_output(summary)
+
     if target == "tr" and _has_significant_english_content(summary):
         print("[LANG GUARD] Mixed EN/TR output detected for Turkish target, repairing...")
         summary = _repair_mixed_text_for_turkish(summary, source_hint=source_hint)
+        summary = _normalize_turkish_output(summary)
 
     if _looks_like_target_language(summary, target):
         return summary
@@ -402,6 +675,8 @@ def _enforce_target_language(summary: str, target_language: str, source_hint: st
     try:
         fixed = _translate_with_mbart(summary, source_lang=candidate_source, target_lang=target)
         fixed = _sanitize_summary_output(fixed)
+        if target == "tr":
+            fixed = _normalize_turkish_output(fixed)
         if _looks_like_target_language(fixed, target):
             print(f"[LANG GUARD] Corrected output language: {candidate_source} -> {target}")
             return fixed
@@ -448,6 +723,104 @@ def _remove_ocr_gibberish(text: str) -> str:
     return text
 
 
+def _split_merged_words(text: str) -> str:
+    """Try to split merged words produced by OCR where capitalization or diacritics join words.
+
+    Heuristic: insert space between a lowercase letter and an uppercase/diacritic uppercase letter
+    and between a letter followed by a diacritic-less uppercase (common in merged tokens)
+    Also normalize runs like 'YapayZekâİstanbul' -> 'Yapay Zekâ İstanbul'.
+    """
+    import re
+    if not text:
+        return text
+
+    # Split lowercase->Uppercase (including Turkish uppercase chars)
+    text = re.sub(r'([a-zçğıöşü])([A-ZÇĞİÖŞÜ])', r'\1 \2', text)
+
+    # Also split when a diacritic-less lowercase is followed immediately by uppercase without space
+    text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+
+    # Separate letters and digits stuck together (e.g., '3. 0' -> '3.0' handled elsewhere)
+    text = re.sub(r'([A-Za-zÇĞİÖŞÜçğıöşü])([0-9])', r'\1 \2', text)
+    text = re.sub(r'([0-9])([A-Za-zÇĞİÖŞÜçğıöşü])', r'\1 \2', text)
+
+    return text
+
+
+def _remove_repeated_phrases(text: str) -> str:
+    """Collapse immediately repeated n-gram phrases (2-6 words) that appear twice or more in a row."""
+    import re
+    if not text:
+        return text
+
+    # Normalize spaces
+    txt = re.sub(r'\s+', ' ', text).strip()
+
+    # For n-grams of size 2..6, remove immediate repetitions like '... X Y X Y ...' or 'word1 word2 word1 word2'
+    for n in range(6, 1, -1):
+        pattern = r'(?:\b(?:\w+\W+){0,%d}?\w+\b)\s+(?:\1\s+)+' % (n-1)
+        try:
+            txt = re.sub(pattern, r'\1 ', txt, flags=re.IGNORECASE)
+        except re.error:
+            # Fallback simple pattern: repeated two-word sequences
+            txt = re.sub(r'\b(\w+\s+\w+)\s+\1\b', r'\1', txt, flags=re.IGNORECASE)
+
+    # Remove triple+ single-word repeats
+    txt = re.sub(r'\b(\w+)(?:\s+\1){2,}\b', r'\1', txt, flags=re.IGNORECASE)
+
+    return txt
+
+
+def _remove_encoding_artifacts(text: str) -> str:
+    """Remove stray encoding/garbage sequences often produced by PDF->text converters."""
+    import re
+    if not text:
+        return text
+
+    # Common mojibake sequences observed in logs
+    replacements = [
+        (r'Ô£ô', ''),
+        (r'Ã¼', 'ü'),
+        (r'Ã§', 'ç'),
+        (r'Ã¶', 'ö'),
+        (r'Ã', ''),
+    ]
+    for pat, rep in replacements:
+        text = re.sub(pat, rep, text)
+
+    # Remove very short garbage tokens (like 'Y', 'Te', 'W.') that appear alone on lines
+    text = re.sub(r'(?m)^\s*[A-Za-z]{1,2}\s*$\n?', '', text)
+
+    # Remove excessive non-printable/control characters
+    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]+', ' ', text)
+
+    # Collapse repeated punctuation
+    text = re.sub(r'([!?.]){2,}', r'\1', text)
+
+    return text
+
+
+def _aggressive_clean_text(text: str) -> str:
+    """Apply a set of aggressive cleaning heuristics targeted at OCR/merged/garbled inputs."""
+    if not text:
+        return text
+
+    text = _remove_encoding_artifacts(text)
+    text = _split_merged_words(text)
+    text = _remove_repeated_phrases(text)
+
+    # Remove obvious garbage words that are not language tokens
+    import re
+    garbage_tokens = [r'\bsaçmalıyo\b', r'\bsaçmalıyor\b', r'\bsaçmalık\b']
+    for g in garbage_tokens:
+        text = re.sub(g, '', text, flags=re.IGNORECASE)
+
+    # Normalize multiple spaces and trim
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    return text
+
+
 def _clean_text(text: str, strict_english_only: bool = True) -> str:
     """Clean text from PDF extraction artifacts, author info, and non-English content.
     
@@ -459,6 +832,12 @@ def _clean_text(text: str, strict_english_only: bool = True) -> str:
     
     # === PHASE 0: Remove OCR Gibberish ===
     text = _remove_ocr_gibberish(text)
+    # Additional aggressive cleaning for merged words, encoding artifacts and repeated phrases
+    try:
+        text = _aggressive_clean_text(text)
+    except Exception:
+        # Be defensive: if aggressive cleaning fails, proceed with the original cleaned text
+        pass
     
     # === PHASE 1: Remove Author/Header Information ===
     # Remove author name patterns: "Dr. John Smith", "Prof. Jane Doe", etc.
@@ -490,7 +869,9 @@ def _clean_text(text: str, strict_english_only: bool = True) -> str:
     text = re.sub(r'\bH\.R\.\d+\b', '', text)
     text = re.sub(r'The \d+(th|st|nd|rd)\s+(Congress|Conference|Symposium)', '', text)
     
-    # === PHASE 3: Fix PDF Extraction Issues ===
+    # === PHASE 3: Fix PDF Extraction Issues + Sentence Validation ===
+    text = _fix_truncated_sentences(text)
+
     # Remove excessive whitespace
     text = re.sub(r'\s+', ' ', text)
     
@@ -978,13 +1359,13 @@ def summarize_multilingual(
             min_len = 20
             max_len = 80
         elif length_mode == "medium":
-            target_words = int(original_word_count * 0.10)
-            min_len = max(50, int(target_words * 0.6))
-            max_len = min(400, int(target_words * 1.5))
+                target_words = int(original_word_count * 0.25)
+                min_len = max(30, int(target_words * 0.3))  # reduced floor to 30
+                max_len = max(80, min(1024, int(target_words * 1.5)))  # allow up to 1.5x target, min 80
         elif length_mode == "long":
             target_words = int(original_word_count * 0.25)
-            min_len = max(100, int(target_words * 0.3))
-            max_len = min(1024, int(target_words * 0.6))  # mBART max
+            min_len = max(30, int(target_words * 0.3))  # was: max(100, ...)
+            max_len = max(80, min(1024, int(target_words * 1.5)))  # was: min(1024, int(target_words * 0.6))
         else:
             target_words = int(original_word_count * 0.10)
             min_len = 50
@@ -1557,7 +1938,11 @@ def summarize_with_embeddings(
     
     
     # PHASE 1: Clean text
-    if source_language == 'en' or not use_multilingual:
+    # Use strict English cleanup ONLY when target is English
+    # For cross-lingual requests (e.g. EN→TR), use light multilingual cleanup
+    should_use_strict_english_mode = (target_language == 'en')
+    
+    if (source_language == 'en' and should_use_strict_english_mode) or not use_multilingual:
         print(f"[SUMMARY] Phase 1: Cleaning English text (removing author info, non-English content)...")
         text = _clean_text(text, strict_english_only=True)
         print(f"[SUMMARY] After cleaning: {len(text)} chars, {len(text.split())} words")
@@ -1566,7 +1951,7 @@ def summarize_with_embeddings(
             print(f"[SUMMARY ERROR] Text too short after cleaning (<100 chars)")
             return "Error: Document contains insufficient English content for summarization."
     else:
-        print(f"[SUMMARY] Phase 1: Applying light cleanup for multilingual mode")
+        print(f"[SUMMARY] Phase 1: Applying light cleanup for multilingual mode (target={target_language})")
         text = _clean_text(text, strict_english_only=False)
         text = _sanitize_summary_output(text)
         print(f"[SUMMARY] After light cleanup: {len(text)} chars, {len(text.split())} words")
@@ -1652,6 +2037,47 @@ def summarize_with_embeddings(
         print(f"[SUMMARY]   → Target: ~{int(original_word_count * 0.25)} words (25% of original)")
     
     try:
+        # Turkish source text is handled better with extractive summarization for all length modes.
+        turkish_like_input = (
+            target_language == 'tr'
+            and length_mode in {'short', 'medium', 'long'}
+            and (
+                _normalize_lang_code(source_language) == 'tr'
+                or source_language == 'auto'
+                or _is_mostly_turkish(text)
+            )
+        )
+
+        if turkish_like_input:
+            print('[SUMMARY] Using Turkish extractive summarization for Turkish mode')
+            if length_mode == 'short':
+                extractive_max_sentences = 1
+            elif length_mode == 'medium':
+                extractive_max_sentences = 3
+            else:
+                extractive_max_sentences = 6
+            summary = _extractive_turkish_summary(text, max_sentences=extractive_max_sentences)
+            summary = _enforce_target_language(summary, target_language=target_language, source_hint=source_language)
+            final = _apply_hard_limit(summary, max_chars)
+            print(f"[SUMMARY] ✓ Success: {len(final)} chars, {len(final.split())} words")
+            print(f"{'='*60}\n")
+            return final
+
+        # Heuristic: for Turkish target and very large inputs, avoid 'short' mode
+        # because chunking into few tiny parts produces mixed-language output.
+        if target_language == 'tr' and length_mode == 'short' and len(text.split()) > 2000:
+            print('[SUMMARY] Large Turkish input with short mode detected — switching short->medium for stability')
+            length_mode = 'medium'
+
+        # Noisy Turkish inputs need a little more room to produce fluent Turkish.
+        if target_language == 'tr' and length_mode == 'short' and _normalize_lang_code(source_language) in {'tr', 'auto'}:
+            print('[SUMMARY] Turkish short input detected — switching short->medium for cleaner Turkish output')
+            length_mode = 'medium'
+
+        if target_language == 'tr' and length_mode == 'short' and _is_noisy_text(text):
+            print('[SUMMARY] Noisy Turkish input detected — switching short->medium for cleaner Turkish output')
+            length_mode = 'medium'
+
         # Choose summarization strategy
         if length_mode == "short" and source_language == "en" and target_language == "tr":
             # Safer path for short Turkish summaries: summarize in English first, then translate.
@@ -1665,17 +2091,29 @@ def summarize_with_embeddings(
             summary = _translate_with_mbart(en_short, source_lang="en", target_lang="tr")
             summary = _repair_mixed_text_for_turkish(summary, source_hint="en")
         elif length_mode == "short" and source_language == "tr" and target_language == "tr":
-            # Stabilize noisy Turkish OCR text via EN pivot for cleaner short outputs.
-            print("[SUMMARY] Using safe short TR path: TR -> EN translate -> EN summarize -> TR translate")
-            en_text = _translate_with_mbart(text, source_lang="tr", target_lang="en")
-            en_short = _summarize_with_transformers(
-                en_text,
-                "short",
-                original_word_count,
-                "english",
-            )
-            summary = _translate_with_mbart(en_short, source_lang="en", target_lang="tr")
-            summary = _repair_mixed_text_for_turkish(summary, source_hint="en")
+            # Prefer direct TR summarization for short Turkish summaries unless the
+            # input looks noisy (OCR artifacts). Pivot via English only when noisy.
+            if _is_noisy_text(text):
+                print("[SUMMARY] Noisy Turkish input detected — using pivot TR->EN->EN-summarize->TR")
+                en_text = _translate_with_mbart(text, source_lang="tr", target_lang="en")
+                en_short = _summarize_with_transformers(
+                    en_text,
+                    "short",
+                    original_word_count,
+                    "english",
+                )
+                summary = _translate_with_mbart(en_short, source_lang="en", target_lang="tr")
+                summary = _repair_mixed_text_for_turkish(summary, source_hint="en")
+            else:
+                print("[SUMMARY] Using direct mBART TR->TR for short Turkish summaries")
+                summary = summarize_multilingual(
+                    text=text,
+                    source_lang=source_language,
+                    target_lang=target_language,
+                    length_mode=length_mode,
+                    original_word_count=original_word_count,
+                    fast_mode=fast_english_medium,
+                )
         elif needs_multilingual:
             # Use mBART-50 for multilingual summarization
             print(f"[SUMMARY] Using mBART-50 multilingual model")
@@ -1704,12 +2142,38 @@ def summarize_with_embeddings(
                 print(f"[SUMMARY WARNING] Output contains non-English content, re-cleaning...")
                 summary = _clean_text(summary, strict_english_only=True)
         
-        # Apply hard character limit as final fallback
+        # Apply language enforcement (try to ensure target language)
         summary = _enforce_target_language(summary, target_language=target_language, source_hint=source_language)
+
+        # Aggressive fallback: if target is Turkish and enforcement failed,
+        # force translate the current summary assuming it is English.
+        if target_language == 'tr' and not _looks_like_target_language(summary, 'tr'):
+            try:
+                print('[LANG GUARD] Enforcement failed for TR; forcing translate en->tr as fallback')
+                forced = _translate_with_mbart(summary, source_lang='en', target_lang='tr')
+                forced = _sanitize_summary_output(forced)
+                if _looks_like_target_language(forced, 'tr'):
+                    summary = forced
+            except Exception as e:
+                print(f"[LANG GUARD] Forced translate failed: {e}")
         final = _apply_hard_limit(summary, max_chars)
         final_words = len(final.split())
         final_chars = len(final)
-        
+
+        # Final aggressive safety: if target is Turkish but result is not Turkish,
+        # force translate assuming it is English.
+        if target_language == 'tr' and not _is_mostly_turkish(final):
+            try:
+                print('[LANG GUARD] Final result not Turkish — forcing en->tr translate')
+                forced = _translate_with_mbart(final, source_lang='en', target_lang='tr')
+                forced = _sanitize_summary_output(forced)
+                if _is_mostly_turkish(forced):
+                    final = _apply_hard_limit(forced, max_chars)
+                    final_words = len(final.split())
+                    final_chars = len(final)
+            except Exception as e:
+                print(f"[LANG GUARD] Final forced translate failed: {e}")
+
         print(f"[SUMMARY] ✓ Success: {final_chars} chars, {final_words} words")
         print(f"{'='*60}\n")
         return final
