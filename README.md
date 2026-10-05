@@ -1,84 +1,186 @@
 # ArticleSumm
-Yapay zeka destekli akıllı makale özetleme platformu. Python, PostgreSQL ve Docker kullanılarak geliştirilen 3 katmanlı bir web uygulamasıdır.
 
-## 🚀 AI Model Özellikleri
+> AI-powered article summarization platform — Graduation thesis project
+> Yapay zeka destekli makale özetleme platformu — Bitirme ödevi projesi
 
-### GPU Desteği (ÖNERİLEN)
-RTX 4060, 3060, 4070 gibi NVIDIA GPU'lar desteklenir.
+---
 
-#### GPU Kurulumu (Daha Hızlı):
-```bash
-# 1. GPU sürümü PyTorch ile kurun
-pip install -r requirements-gpu.txt
+## 🇬🇧 English
 
-# 2. .env dosyası oluşturun
-cp .env.example .env
+ArticleSumm is a 3-tier web application that uses transformer-based language models to automatically summarize long-form articles. Users can paste or upload article text and receive concise, high-quality summaries in seconds. The system supports multiple summarization models and can be configured to run on both CPU and GPU.
 
-# 3. .env dosyasında GPU'yu aktif edin
-USE_GPU=true
+### Features
+
+- **Automatic Summarization** — Extracts key information from long articles using NLP models (BART, DistilBART, mBART)
+- **Multilingual Support** — Supports Turkish and other languages via multilingual models
+- **GPU Acceleration** — Optional NVIDIA GPU support for significantly faster inference
+- **Configurable Models** — Switch between lightweight (769MB) and high-quality (2.4GB) models via environment variables
+- **External API Mode** — Offload inference to an external AI provider instead of running models locally
+- **Dockerized** — Fully containerized with Docker and Docker Compose for easy deployment
+- **Nginx Reverse Proxy** — Production-ready setup with Nginx
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Python, Flask |
+| **Frontend** | HTML / CSS / JavaScript |
+| **AI Models** | HuggingFace Transformers (BART, DistilBART, mBART) |
+| **Database** | PostgreSQL |
+| **Containerization** | Docker, Docker Compose |
+| **Proxy** | Nginx |
+| **Embeddings** | sentence-transformers (ChromaDB optional) |
+
+### Project Structure
+
+```
+ArticleSumm/
+├── app/                    # Python backend application
+├── Frontend/               # Web UI
+├── nginx/                  # Nginx configuration
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt        # CPU dependencies
+├── requirements-gpu.txt    # GPU dependencies
+└── .env.example            # Environment variable template
 ```
 
-#### CPU Kurulumu (Daha Yavaş):
+### Getting Started
+
+**Prerequisites:** Python 3.10+, Docker & Docker Compose, (Optional) NVIDIA GPU
+
+**1. Clone the repository**
 ```bash
-# 1. Normal requirements
+git clone https://github.com/T-anay/ArticleSumm.git
+cd ArticleSumm
+```
+
+**2. Configure environment variables**
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+```env
+USE_GPU=false                            # true for NVIDIA GPU acceleration
+SUMMARY_MODEL=facebook/bart-large-cnn   # AI model to use
+AI_PROVIDER=local                        # 'local' or 'ext' for external API
+```
+
+**3. Run with Docker Compose**
+```bash
+docker-compose up --build
+```
+The application will be available at `http://localhost`.
+
+**4. Run locally (without Docker)**
+```bash
+# CPU
 pip install -r requirements.txt
 
-# 2. .env dosyasında CPU kullanımı
-USE_GPU=false
+# GPU (NVIDIA)
+pip install -r requirements-gpu.txt
+
+python app/main.py
 ```
 
-### Model Seçenekleri
+### Environment Variables
 
-`.env` dosyasında model değiştirebilirsiniz:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `USE_GPU` | `false` | Enable NVIDIA GPU acceleration |
+| `SUMMARY_MODEL` | `facebook/bart-large-cnn` | HuggingFace model for summarization |
+| `EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | Embedding model |
+| `USE_CHROMA` | `false` | Enable ChromaDB for chunk selection |
+| `AI_PROVIDER` | `local` | `local` = Docker, `ext` = external API |
 
+### Available Models
+
+| Model | Size | Language |
+|-------|------|----------|
+| `sshleifer/distilbart-cnn-12-6` | 769 MB | English (fast) |
+| `facebook/bart-large-cnn` | 1.6 GB | English (default) |
+| `facebook/mbart-large-50` | 2.4 GB | Multilingual + Turkish |
+
+### How It Works
+
+1. User submits an article through the web interface
+2. The backend pre-processes and chunks the text
+3. The selected transformer model generates a summary for each chunk
+4. (Optional) ChromaDB selects the most relevant chunks before summarization
+5. The consolidated summary is returned to the user
+
+---
+
+## 🇹🇷 Türkçe
+
+ArticleSumm, transformer tabanlı dil modellerini kullanarak uzun makaleleri otomatik olarak özetleyen 3 katmanlı bir web uygulamasıdır. Kullanıcılar makale metnini yapıştırarak veya yükleyerek saniyeler içinde kısa ve kaliteli özetler alabilir. Sistem birden fazla özetleme modelini destekler ve hem CPU hem de GPU ile çalışacak şekilde yapılandırılabilir.
+
+### Özellikler
+
+- **Otomatik Özetleme** — NLP modelleri (BART, DistilBART, mBART) kullanarak uzun makalelerden kilit bilgileri çıkarır
+- **Çok Dilli Destek** — Çok dilli modeller sayesinde Türkçe ve diğer dilleri destekler
+- **GPU Hızlandırması** — Çok daha hızlı çıkarım için isteğe bağlı NVIDIA GPU desteği
+- **Yapılandırılabilir Modeller** — Ortam değişkenleri ile hafif (769MB) ve yüksek kaliteli (2.4GB) modeller arasında geçiş
+- **Harici API Modu** — Modelleri yerel olarak çalıştırmak yerine harici bir AI sağlayıcısına yük aktarımı
+- **Docker Desteği** — Docker ve Docker Compose ile tam konteynerleştirilmiş kolay kurulum
+- **Nginx Ters Proxy** — Nginx ile production'a hazır yapı
+
+### Teknoloji Yığını
+
+| Katman | Teknoloji |
+|--------|-----------|
+| **Backend** | Python, Flask |
+| **Frontend** | HTML / CSS / JavaScript |
+| **Yapay Zeka Modelleri** | HuggingFace Transformers (BART, DistilBART, mBART) |
+| **Veritabanı** | PostgreSQL |
+| **Konteynerleştirme** | Docker, Docker Compose |
+| **Proxy** | Nginx |
+| **Gömülemeler** | sentence-transformers (ChromaDB opsiyonel) |
+
+### Başlarken
+
+**Gereksinimler:** Python 3.10+, Docker & Docker Compose, (İsteğe bağlı) NVIDIA GPU
+
+**1. Repoyu klonlayın**
 ```bash
-# Hızlı model (769MB, İngilizce)
-SUMMARY_MODEL=sshleifer/distilbart-cnn-12-6
-
-# Varsayılan (1.6GB, İngilizce)
-SUMMARY_MODEL=facebook/bart-large-cnn
-
-# Türkçe desteği (2.4GB, çok dilli)
-SUMMARY_MODEL=facebook/mbart-large-50
+git clone https://github.com/T-anay/ArticleSumm.git
+cd ArticleSumm
 ```
 
-### Harici Model API ile Çalıştırma
-
-Projeyi yerel transformer yerine harici bir model API ile çalıştırabilirsiniz.
-
-`.env` örneği:
-
+**2. Ortam değişkenlerini yapılandırın**
 ```bash
-AI_PROVIDER=external
-EXTERNAL_LLM_BASE_URL=https://api.openai.com/v1
-EXTERNAL_LLM_ENDPOINT=/chat/completions
-EXTERNAL_LLM_MODEL=gpt-4o-mini
-EXTERNAL_LLM_API_KEY=your_api_key
+cp .env.example .env
 ```
 
-Notlar:
+`.env` dosyasını düzenleyin:
+```env
+USE_GPU=false                            # NVIDIA GPU için true yapın
+SUMMARY_MODEL=facebook/bart-large-cnn   # Kullanılacak AI modeli
+AI_PROVIDER=local                        # 'local' veya harici API için 'ext'
+```
 
-- `AI_PROVIDER=external` iken özetleme OpenAI-compatible endpoint'e gönderilir.
-- Harici API hata verirse sistem otomatik olarak yerel modele fallback yapar.
-- `AI_PROVIDER=local` varsayılandır ve mevcut lokal model akışı ile çalışır.
-
-### Performans Beklentileri
-
-| Metin Uzunluğu | CPU (32GB RAM) | GPU (RTX 4060) |
-|----------------|----------------|----------------|
-| 1000 kelime    | ~30 saniye     | ~5 saniye      |
-| 5000 kelime    | ~2 dakika      | ~15 saniye     |
-| 10000 kelime   | ~5 dakika      | ~30 saniye     |
-
-### ChromaDB (Opsiyonel)
-
-Embedding-based chunk selection için ChromaDB kullanabilirsiniz:
-
+**3. Docker Compose ile çalıştırın**
 ```bash
-# .env dosyasında
-USE_CHROMA=true
-CHROMA_TENANT=your-tenant
-CHROMA_DATABASE=your-database
+docker-compose up --build
+```
+Uygulama `http://localhost` adresinde çalışır.
+
+**4. Docker olmadan yerel çalıştırma**
+```bash
+# CPU
+pip install -r requirements.txt
+
+# GPU (NVIDIA)
+pip install -r requirements-gpu.txt
+
+python app/main.py
 ```
 
-**Not:** ChromaDB olmadan da çalışır (direkt özetleme).
+### Nasıl Çalışır?
+
+1. Kullanıcı web arayüzü üzerinden makale gönderir
+2. Backend metni önceden işler ve parçalara ayırır
+3. Seçilen transformer modeli her parça için özet oluşturur
+4. (İsteğe bağlı) ChromaDB, özetlemeden önce en ilgili parçaları seçer
+5. Birleştirilmiş özet kullanıcıya döndürülür
